@@ -14,9 +14,9 @@ SayIt! is a first-build communication translator that turns a messy draft into a
 
 ## Project shape
 
-- [`site/`](/Users/dannybrooking/Documents/GitHub = master copy/amp-sayit/site): static frontend shipped to Cloudflare Pages
-- [`functions/api/translate.js`](/Users/dannybrooking/Documents/GitHub = master copy/amp-sayit/functions/api/translate.js): Pages Function translation endpoint
-- [`site/src/rewrite-engine.js`](/Users/dannybrooking/Documents/GitHub = master copy/amp-sayit/site/src/rewrite-engine.js): rule-based translation engine used by both frontend fallback and server endpoint
+- [`site/`](/Users/dannybrooking/Documents/GitHub = master copy/AMP/projects/SayIt/site): static frontend shipped to Cloudflare Pages
+- [`functions/api/translate.js`](/Users/dannybrooking/Documents/GitHub = master copy/AMP/projects/SayIt/functions/api/translate.js): Pages Function translation endpoint
+- [`site/src/rewrite-engine.js`](/Users/dannybrooking/Documents/GitHub = master copy/AMP/projects/SayIt/site/src/rewrite-engine.js): rule-based translation engine used by both frontend fallback and server endpoint
 
 ## Commands
 
