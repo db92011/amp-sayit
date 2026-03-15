@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;700&display=swap");
 
 :root {
-  --bg: #08183d;
+  --bg: #63cfff;
   --surface: rgba(243, 249, 255, 0.84);
   --surface-strong: rgba(250, 254, 255, 0.95);
   --surface-alt: rgba(6, 27, 83, 0.9);
@@ -33,10 +33,10 @@ body {
   color: var(--text);
   font-family: "Space Grotesk", sans-serif;
   background:
-    radial-gradient(circle at 12% 10%, rgba(74, 210, 255, 0.28), transparent 24%),
-    radial-gradient(circle at 88% 16%, rgba(199, 255, 37, 0.24), transparent 22%),
-    radial-gradient(circle at 52% 100%, rgba(20, 170, 39, 0.22), transparent 30%),
-    linear-gradient(145deg, #051234 0%, #0a2a78 44%, #082056 100%);
+    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.45), transparent 18%),
+    radial-gradient(circle at 85% 14%, rgba(212, 255, 94, 0.28), transparent 18%),
+    radial-gradient(circle at 50% 100%, rgba(33, 179, 51, 0.2), transparent 28%),
+    linear-gradient(180deg, #8ce4ff 0%, #68bfff 24%, #2e71d9 62%, #123a8a 100%);
 }
 
 button,
@@ -64,7 +64,7 @@ button {
 .backdrop-one {
   top: -8rem;
   right: -4rem;
-  background: rgba(79, 215, 255, 0.3);
+  background: rgba(255, 255, 255, 0.36);
 }
 
 .backdrop-two {
@@ -96,13 +96,13 @@ button {
 
 .hero-copy {
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 2rem;
   background:
-    linear-gradient(145deg, rgba(7, 31, 98, 0.92), rgba(12, 88, 210, 0.8)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(145deg, rgba(223, 247, 255, 0.98), rgba(155, 219, 255, 0.94) 58%, rgba(207, 255, 119, 0.72) 100%);
   box-shadow: var(--shadow);
-  color: #ffffff;
+  color: #07225c;
 }
 
 .eyebrow,
@@ -112,7 +112,7 @@ button {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 0.76rem;
-  color: rgba(231, 255, 55, 0.92);
+  color: #137e24;
 }
 
 .hero-brand {
@@ -125,19 +125,20 @@ button {
 .hero-logo-shell {
   display: grid;
   place-items: center;
-  width: clamp(7rem, 16vw, 9.5rem);
+  width: clamp(8.5rem, 18vw, 11rem);
   aspect-ratio: 1;
-  padding: 0.75rem;
-  border-radius: 2rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .hero-logo {
   display: block;
   width: 100%;
   height: auto;
+  filter: drop-shadow(0 14px 24px rgba(7, 32, 92, 0.24));
 }
 
 .hero-copy-stack {
@@ -158,7 +159,7 @@ button {
   font-size: clamp(1.2rem, 2.4vw, 1.55rem);
   line-height: 1.45;
   font-weight: 700;
-  color: #ffffff;
+  color: #0b2a71;
 }
 
 .hero-text {
@@ -166,7 +167,7 @@ button {
   margin: 0.75rem 0 0;
   font-size: 1.1rem;
   line-height: 1.6;
-  color: rgba(229, 241, 255, 0.86);
+  color: rgba(11, 42, 113, 0.78);
 }
 
 .hero-cards {
@@ -179,7 +180,7 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 1.5rem;
   background:
-    linear-gradient(180deg, rgba(243, 249, 255, 0.95), rgba(220, 239, 255, 0.88)),
+    linear-gradient(180deg, rgba(246, 252, 255, 0.97), rgba(219, 241, 255, 0.9)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
   box-shadow: var(--shadow);
 }
