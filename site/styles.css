@@ -562,6 +562,25 @@ button:disabled {
   margin-right: auto;
 }
 
+#plusModal #deviceLimitMsg {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(32, 168, 255, 0.22);
+  background: rgba(32, 168, 255, 0.08);
+  color: rgba(0, 0, 0, 0.78);
+  line-height: 1.4;
+}
+
+#plusModal #deviceLimitMsg strong {
+  color: rgba(0, 0, 0, 0.86);
+}
+
+#plusModal #manageDevicesLink {
+  margin-top: 10px;
+  width: 100%;
+}
+
 #plusModal .modalActions {
   display: flex;
   gap: 10px;

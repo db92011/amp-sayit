@@ -5,7 +5,11 @@ import { requestTranslation } from "./translation-service.js";
 const STORAGE_KEY = "sayit-draft-v2";
 const SAYIT_PRO_ACTIVE_KEY = "sayit_pro_active";
 const SAYIT_PRO_EMAIL_KEY = "sayit_pro_email";
-const SAYIT_PRO_URL = "https://circle2people.com/sayit/";
+const SAYIT_DEVICE_ID_KEY = "sayit_device_id";
+const SAYIT_API_BASE = "https://circle2people.com";
+const SAYIT_PLAN_URL = `${SAYIT_API_BASE}/api/plan`;
+const SAYIT_REMOVE_OLDEST_URL = `${SAYIT_API_BASE}/api/devices/remove-oldest`;
+const SAYIT_CHECKOUT_URL = `${SAYIT_API_BASE}/api/create-checkout-link`;
 
 const form = document.querySelector("#intake-form");
 const voicePreview = document.querySelector("#voice-preview");
@@ -21,6 +25,8 @@ const plusEmailInput = document.querySelector("#plusEmail");
 const plusCancelButton = document.querySelector("#plusCancelBtn");
 const plusContinueButton = document.querySelector("#plusContinueBtn");
 const counterText = document.querySelector("#counterText");
+const deviceLimitMessage = document.querySelector("#deviceLimitMsg");
+const manageDevicesButton = document.querySelector("#manageDevicesLink");
 
 const fields = {
   recipient: document.querySelector("#recipient"),
@@ -38,6 +44,29 @@ const teleprompter = new TeleprompterController({
 });
 
 let latestMessageText = "";
+let continueBusy = false;
+let removeBusy = false;
+
+function getOrCreateDeviceId() {
+  const existing = String(window.localStorage.getItem(SAYIT_DEVICE_ID_KEY) || "").trim();
+  if (existing) {
+    return existing;
+  }
+
+  let nextId = "";
+  try {
+    if (window.crypto?.randomUUID) {
+      nextId = `sayit_${window.crypto.randomUUID()}`;
+    }
+  } catch {}
+
+  if (!nextId) {
+    nextId = `sayit_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+  }
+
+  window.localStorage.setItem(SAYIT_DEVICE_ID_KEY, nextId);
+  return nextId;
+}
 
 function isSayItProActive() {
   return window.localStorage.getItem(SAYIT_PRO_ACTIVE_KEY) === "true";
@@ -80,6 +109,8 @@ function showPlusModal() {
     plusEmailInput.value = saved;
   }
 
+  resetDeviceLimitUi();
+
   window.setTimeout(() => {
     plusEmailInput?.focus();
   }, 30);
@@ -97,25 +128,264 @@ function hidePlusModal() {
   document.body.style.overflow = "";
 }
 
-function handlePlusContinue() {
+function resetDeviceLimitUi() {
+  if (deviceLimitMessage) {
+    deviceLimitMessage.style.display = "none";
+    deviceLimitMessage.textContent = "";
+    deviceLimitMessage.innerHTML = "";
+  }
+
+  if (manageDevicesButton) {
+    manageDevicesButton.style.display = "none";
+    manageDevicesButton.disabled = false;
+    manageDevicesButton.onclick = null;
+  }
+}
+
+function setDeviceMessage(html) {
+  if (!deviceLimitMessage) {
+    return;
+  }
+
+  deviceLimitMessage.innerHTML = html;
+  deviceLimitMessage.style.display = "block";
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+async function checkPlan(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) {
+    return { plan: "free", status: "none", allowed: true };
+  }
+
+  const deviceId = getOrCreateDeviceId();
+  const response = await fetch(SAYIT_PLAN_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-sayit-device": deviceId,
+      "x-sayit-email": normalizedEmail
+    },
+    body: JSON.stringify({
+      email: normalizedEmail,
+      device_id: deviceId
+    })
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (
+    response.status === 403 &&
+    (body?.reason === "DEVICE_LIMIT_REACHED" || body?.blockReason === "device_limit" || body?.allowed === false)
+  ) {
+    return {
+      plan: "plus",
+      status: body?.status || "active",
+      allowed: false,
+      blocked: true,
+      message: body?.message || "You've already used SayIt! Pro on 2 devices.",
+      seatsUsed: body?.seatsUsed,
+      seatsMax: body?.seatsMax
+    };
+  }
+
+  if (!response.ok) {
+    throw new Error(body?.error || "Unable to check your SayIt! Pro status right now.");
+  }
+
+  return {
+    plan: body?.plan === "plus" ? "plus" : "free",
+    status: body?.status || "none",
+    allowed: body?.allowed !== false
+  };
+}
+
+async function removeOldestDevice(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (removeBusy) {
+    return { ok: false, message: "Please wait…" };
+  }
+
+  removeBusy = true;
+  if (manageDevicesButton) {
+    manageDevicesButton.disabled = true;
+  }
+
+  try {
+    const response = await fetch(SAYIT_REMOVE_OLDEST_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-sayit-device": getOrCreateDeviceId(),
+        "x-sayit-email": normalizedEmail
+      },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        device_id: getOrCreateDeviceId()
+      })
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body?.ok) {
+      return {
+        ok: false,
+        message: body?.message || "Couldn't remove a device. Try again."
+      };
+    }
+
+    return {
+      ok: true,
+      message: body?.message || "Oldest device removed."
+    };
+  } catch {
+    return {
+      ok: false,
+      message: "Network issue. Try again."
+    };
+  } finally {
+    removeBusy = false;
+    if (manageDevicesButton) {
+      manageDevicesButton.disabled = false;
+    }
+  }
+}
+
+function showDeviceLimitUi(message, email) {
+  const seatsLine = String(message || "You've hit the 2-device limit for this email.").trim();
+  setDeviceMessage(
+    "<strong>Device limit reached</strong><br>" +
+      escapeHtml(seatsLine) +
+      "<br><br>To use SayIt! Pro on this device, remove your oldest device seat.<br>" +
+      '<span style="opacity:.85;">This happens instantly here — no new screens.</span>'
+  );
+
+  if (!manageDevicesButton) {
+    return;
+  }
+
+  manageDevicesButton.style.display = "inline-flex";
+  manageDevicesButton.textContent = "Remove your oldest device";
+  manageDevicesButton.onclick = async (event) => {
+    event.preventDefault();
+    setDeviceMessage("<strong>Device limit reached</strong><br>Removing your oldest device…");
+    const result = await removeOldestDevice(email);
+
+    if (!result.ok) {
+      setDeviceMessage(`<strong>Device limit reached</strong><br>${escapeHtml(result.message)}`);
+      return;
+    }
+
+    setDeviceMessage("<strong>Device limit reached</strong><br>Oldest device removed. Unlocking this device…");
+    try {
+      const nextPlan = await checkPlan(email);
+      if (nextPlan.plan === "plus" && nextPlan.allowed !== false) {
+        hidePlusModal();
+        setSayItProActive(email);
+        return;
+      }
+      showDeviceLimitUi(nextPlan.message || "Still blocked. Try once more.", email);
+    } catch (error) {
+      setDeviceMessage(
+        `<strong>Device limit reached</strong><br>${escapeHtml(
+          error instanceof Error ? error.message : "Unable to unlock right now."
+        )}`
+      );
+    }
+  };
+}
+
+async function goToStripeCheckout(email) {
+  const response = await fetch(SAYIT_CHECKOUT_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      email,
+      source: "sayit-app-modal"
+    })
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body?.ok || !body?.checkoutUrl) {
+    throw new Error(body?.error || "Unable to start SayIt! Pro checkout right now.");
+  }
+
+  window.location.href = body.checkoutUrl;
+}
+
+async function syncPlusFromServer() {
+  if (!isSayItProActive()) {
+    return;
+  }
+
+  const email = getSayItProEmail();
+  if (!email) {
+    window.localStorage.removeItem(SAYIT_PRO_ACTIVE_KEY);
+    refreshPlusUi();
+    return;
+  }
+
+  try {
+    const plan = await checkPlan(email);
+    if (plan.plan !== "plus") {
+      window.localStorage.removeItem(SAYIT_PRO_ACTIVE_KEY);
+      refreshPlusUi();
+    }
+  } catch {}
+}
+
+async function handlePlusContinue() {
   const email = String(plusEmailInput?.value || "").trim().toLowerCase();
 
   if (email) {
     window.localStorage.setItem(SAYIT_PRO_EMAIL_KEY, email);
   }
 
-  if (isSayItProActive()) {
-    hidePlusModal();
-    refreshPlusUi();
+  if (!email || continueBusy) {
     return;
   }
 
-  const url = new URL(SAYIT_PRO_URL);
-  if (email) {
-    url.searchParams.set("email", email);
+  continueBusy = true;
+  if (plusContinueButton) {
+    plusContinueButton.disabled = true;
   }
-  url.searchParams.set("source", "sayit-app");
-  window.location.href = url.toString();
+
+  try {
+    resetDeviceLimitUi();
+
+    const plan = await checkPlan(email);
+    if (plan.blocked) {
+      showDeviceLimitUi(plan.message, email);
+      return;
+    }
+
+    if (plan.plan === "plus") {
+      hidePlusModal();
+      setSayItProActive(email);
+      return;
+    }
+
+    await goToStripeCheckout(email);
+  } catch (error) {
+    setDeviceMessage(
+      `<strong>SayIt! Pro</strong><br>${escapeHtml(
+        error instanceof Error ? error.message : "Unable to continue right now."
+      )}`
+    );
+  } finally {
+    continueBusy = false;
+    if (plusContinueButton) {
+      plusContinueButton.disabled = false;
+    }
+  }
 }
 
 function syncPlusStateFromUrl() {
@@ -265,6 +535,7 @@ function resetForm() {
 clearOutputs();
 syncPlusStateFromUrl();
 refreshPlusUi();
+syncPlusFromServer();
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();

@@ -51,6 +51,7 @@ Copy `.dev.vars.example` to `.dev.vars` for local Pages-style development or set
 
 - The app stays usable without OpenAI because the existing rule-based translator remains as the fallback path.
 - The frontend calls `/api/translate` first and falls back to the local engine if the API route is not present.
+- The SayIt! Pro in-app modal now expects Circle the People API endpoints plus a `SAYIT_DB` D1 binding on the Circle site for two-device seat tracking.
 - Billing, subscription enforcement, email validation, and persistent accounts are not implemented in this build.
 
 ## Recommended next steps
