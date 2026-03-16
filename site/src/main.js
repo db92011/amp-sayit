@@ -27,7 +27,7 @@ const openTeleprompterButton = document.querySelector("#open-teleprompter");
 const closeTeleprompterButton = document.querySelector("#close-teleprompter");
 const teleprompterOverlay = document.querySelector("#teleprompter-overlay");
 const teleprompterSummary = document.querySelector("#teleprompter-summary");
-const submitButton = form.querySelector('button[type="submit"]');
+const submitButton = document.querySelector("#translate-action");
 
 const fields = {
   recipient: document.querySelector("#recipient"),
@@ -55,7 +55,7 @@ function updateVoicePreview(text = "") {
 
 function setTeleprompterSummary(text = "") {
   teleprompterSummary.textContent =
-    text || "Generate a translated message and SayIt will open a focused teleprompter screen.";
+    text || "Generate a translated message to unlock teleprompter mode.";
 }
 
 function setCopyButtonLabel(label) {

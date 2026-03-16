@@ -23,124 +23,123 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="backdrop backdrop-one"></div>
-    <div class="backdrop backdrop-two"></div>
     <main class="shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <div class="hero-brand">
-            <div class="hero-logo-shell">
-              <img class="hero-logo" src="./assets/sayit-app-icon.png" alt="SayIt app icon" />
-            </div>
-            <div class="hero-copy-stack">
-              <p class="eyebrow">Communication translator + teleprompter</p>
-              <h1>Say what you mean so it lands.</h1>
-            </div>
+      <header class="app-bar">
+        <div class="app-brand">
+          <div class="app-brand-mark">
+            <img class="app-brand-icon" src="./assets/sayit-app-icon.png" alt="SayIt app icon" />
           </div>
-          <p class="hero-lead">Tap the mic and tell me what's going on.</p>
-          <p class="hero-text">I'll help you say it the way you mean it.</p>
+          <div class="app-brand-copy">
+            <p class="app-brand-kicker">SayIt</p>
+            <h1>Communication translator</h1>
+          </div>
+        </div>
+        <div class="app-toolbar">
+          <button type="button" id="load-sample" class="toolbar-button">Sample</button>
+          <button type="button" id="reset-form" class="toolbar-button">Reset</button>
         </div>
       </header>
 
-      <section class="workspace">
-        <section class="panel intake-panel">
-          <div class="panel-heading intake-heading">
-            <p class="section-label">Intake</p>
-          </div>
+      <section class="app-surface">
+        <form id="intake-form" class="intake-form">
+          <section class="app-section">
+            <label class="field">
+              <span>Who are you talking to?</span>
+              <input
+                id="recipient"
+                name="recipient"
+                type="text"
+                placeholder="Name"
+              />
+            </label>
 
-          <form id="intake-form" class="intake-form">
-            <div class="field-grid">
-              <label class="field">
-                <span>Who are you talking to?</span>
-                <input
-                  id="recipient"
-                  name="recipient"
-                  type="text"
-                  placeholder="Name"
-                />
-              </label>
-
-              <label class="field">
-                <span>Relationship dynamic</span>
-                <select id="relationship" name="relationship">
-                  <option value="">Select a dynamic</option>
-                  <option>Spouse or partner</option>
-                  <option>Child or teenager</option>
-                  <option>Friend</option>
-                  <option>Coworker</option>
-                  <option>Boss or supervisor</option>
-                  <option>Employee or subordinate</option>
-                  <option>Customer</option>
-                  <option>Client</option>
-                  <option>Stranger</option>
-                  <option>Online conversation</option>
-                  <option>Social media comment</option>
-                </select>
-              </label>
-            </div>
+            <label class="field">
+              <span>Relationship dynamic</span>
+              <select id="relationship" name="relationship">
+                <option value="">Select a dynamic</option>
+                <option>Spouse or partner</option>
+                <option>Child or teenager</option>
+                <option>Friend</option>
+                <option>Coworker</option>
+                <option>Boss or supervisor</option>
+                <option>Employee or subordinate</option>
+                <option>Customer</option>
+                <option>Client</option>
+                <option>Stranger</option>
+                <option>Online conversation</option>
+                <option>Social media comment</option>
+              </select>
+            </label>
 
             <label class="field">
               <span>Add context to this</span>
               <textarea
                 id="situation"
                 name="situation"
-                rows="3"
+                rows="4"
                 placeholder="What is this conversation about? Give me the main context."
               ></textarea>
             </label>
 
             <input id="message" name="message" type="hidden" />
+          </section>
 
-            <div class="voice-bar">
-              <div class="voice-copy">
-                <p class="voice-title">Talk to me. I've got your back.</p>
-                <p id="voice-status" class="voice-status">
-                  When you're ready, tap SayIt! and speak naturally.
-                </p>
-                <p id="voice-preview" class="voice-preview">Your spoken draft will show up here as you talk.</p>
-              </div>
-              <div class="voice-actions">
-                <button type="button" id="voice-start" class="sayit-button">
-                  <img src="./assets/sayit-button.png" alt="" />
-                  <span>SayIt!</span>
-                </button>
-                <button type="button" id="voice-stop" class="secondary-button">
-                  Stop
-                </button>
-              </div>
+          <section class="app-section voice-section">
+            <div class="section-heading">
+              <p class="section-label">Voice</p>
+              <h2>Talk to me. I've got your back.</h2>
             </div>
-
-            <div class="field-grid">
-              <label class="field">
-                <span>Core intent</span>
-                <select id="intent" name="intent">
-                  <option value="auto">Auto-detect from your message</option>
-                  <option value="explain">Explain a problem</option>
-                  <option value="boundary">Set a boundary</option>
-                  <option value="criticism">Respond to criticism</option>
-                  <option value="correction">Correct someone</option>
-                  <option value="frustration">Express frustration</option>
-                  <option value="help">Ask for help</option>
-                  <option value="clarify">Clarify something</option>
-                </select>
-              </label>
-
-              <label class="field">
-                <span>What outcome do you want?</span>
-                <select id="outcome" name="outcome">
-                  <option value="">Select an outcome</option>
-                  <option>Avoid an argument</option>
-                  <option>Be taken seriously</option>
-                  <option>Sound calm</option>
-                  <option>Sound professional</option>
-                  <option>Sound confident</option>
-                  <option>Be understood clearly</option>
-                  <option>Set a boundary respectfully</option>
-                  <option>Make someone laugh</option>
-                  <option>Defuse tension</option>
-                </select>
-              </label>
+            <p id="voice-status" class="voice-status">
+              When you're ready, tap the icon and speak naturally.
+            </p>
+            <p id="voice-preview" class="voice-preview">Your spoken draft will show up here as you talk.</p>
+            <div class="voice-actions">
+              <button
+                type="button"
+                id="voice-start"
+                class="sayit-button"
+                aria-label="Start voice capture"
+                title="Start voice capture"
+              >
+                <img src="./assets/sayit-app-icon.png" alt="" />
+                <span class="visually-hidden">Start voice capture</span>
+              </button>
+              <button type="button" id="voice-stop" class="secondary-button compact-button">
+                Stop
+              </button>
             </div>
+          </section>
+
+          <section class="app-section">
+            <label class="field">
+              <span>Core intent</span>
+              <select id="intent" name="intent">
+                <option value="auto">Auto-detect from your message</option>
+                <option value="explain">Explain a problem</option>
+                <option value="boundary">Set a boundary</option>
+                <option value="criticism">Respond to criticism</option>
+                <option value="correction">Correct someone</option>
+                <option value="frustration">Express frustration</option>
+                <option value="help">Ask for help</option>
+                <option value="clarify">Clarify something</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>What outcome do you want?</span>
+              <select id="outcome" name="outcome">
+                <option value="">Select an outcome</option>
+                <option>Avoid an argument</option>
+                <option>Be taken seriously</option>
+                <option>Sound calm</option>
+                <option>Sound professional</option>
+                <option>Sound confident</option>
+                <option>Be understood clearly</option>
+                <option>Set a boundary respectfully</option>
+                <option>Make someone laugh</option>
+                <option>Defuse tension</option>
+              </select>
+            </label>
 
             <label class="field">
               <span>Choose the translation tone</span>
@@ -148,74 +147,57 @@
               <div id="tone-group" class="chip-group"></div>
             </label>
 
-            <div class="field-grid">
-              <label class="field">
-                <span>What is the main context of the conversation?</span>
-                <select id="barrier" name="barrier">
-                  <option value="">Select the main context</option>
-                  <option>Work</option>
-                  <option>Partner or relationship</option>
-                  <option>Parenting or family</option>
-                  <option>Friendship</option>
-                  <option>Customer or client</option>
-                  <option>Boundary setting</option>
-                  <option>Conflict repair</option>
-                  <option>Money</option>
-                  <option>Scheduling</option>
-                  <option>Health or care</option>
-                  <option>Something sensitive</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>How do I want this message to come across?</span>
-                <select id="after-state" name="afterState">
-                  <option value="">Select how I want it to come across</option>
-                  <option>Clear</option>
-                  <option>Respectful</option>
-                  <option>Calm</option>
-                  <option>Smart</option>
-                  <option>Short</option>
-                  <option>Confident</option>
-                  <option>Funny</option>
-                  <option>Easy to understand</option>
-                </select>
-              </label>
-            </div>
+            <label class="field">
+              <span>What is the main context of the conversation?</span>
+              <select id="barrier" name="barrier">
+                <option value="">Select the main context</option>
+                <option>Work</option>
+                <option>Partner or relationship</option>
+                <option>Parenting or family</option>
+                <option>Friendship</option>
+                <option>Customer or client</option>
+                <option>Boundary setting</option>
+                <option>Conflict repair</option>
+                <option>Money</option>
+                <option>Scheduling</option>
+                <option>Health or care</option>
+                <option>Something sensitive</option>
+              </select>
+            </label>
 
-            <div class="form-actions">
-              <button type="button" id="load-sample" class="ghost-button">
-                Load sample
-              </button>
-              <button type="button" id="reset-form" class="ghost-button">
-                Reset all
-              </button>
-              <button type="submit" class="primary-button">
-                Let's do this
-              </button>
-            </div>
-          </form>
-        </section>
+            <label class="field">
+              <span>How do I want this message to come across?</span>
+              <select id="after-state" name="afterState">
+                <option value="">Select how I want it to come across</option>
+                <option>Clear</option>
+                <option>Respectful</option>
+                <option>Calm</option>
+                <option>Smart</option>
+                <option>Short</option>
+                <option>Confident</option>
+                <option>Funny</option>
+                <option>Easy to understand</option>
+              </select>
+            </label>
+          </section>
+        </form>
 
-        <section class="panel output-panel">
-          <div class="panel-heading teleprompter-panel-heading">
-            <div>
-              <p class="section-label">Teleprompter</p>
-              <h2>Ready to deliver</h2>
-            </div>
-            <button id="open-teleprompter" type="button" class="secondary-button" disabled>
+        <footer class="app-footer">
+          <div class="delivery-copy">
+            <p class="section-label">Teleprompter</p>
+            <p id="teleprompter-summary" class="teleprompter-summary">
+              Generate a translated message to unlock teleprompter mode.
+            </p>
+          </div>
+          <div class="footer-actions">
+            <button id="open-teleprompter" type="button" class="ghost-button footer-button" disabled>
               Open teleprompter
             </button>
+            <button id="translate-action" type="submit" form="intake-form" class="primary-button footer-button">
+              Let's do this
+            </button>
           </div>
-
-          <section class="teleprompter-card teleprompter-ready-card">
-            <p id="teleprompter-summary" class="teleprompter-summary">
-              Generate a translated message and SayIt will open a focused teleprompter screen.
-            </p>
-            <p class="teleprompter-note">
-              Hit Let&apos;s do this to launch a full-screen delivery view with copy, close, and pace controls.
-            </p>
-          </section>
-        </section>
+        </footer>
       </section>
     </main>
 
