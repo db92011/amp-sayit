@@ -108,8 +108,8 @@ export class TeleprompterController {
     }
 
     const midpoint = this.script.scrollTop + this.script.clientHeight / 2;
-    const nearThreshold = this.script.clientHeight * 0.18;
-    const farThreshold = this.script.clientHeight * 0.34;
+    const nearThreshold = this.script.clientHeight * 0.24;
+    const farThreshold = this.script.clientHeight * 0.4;
     let activeLine = null;
     let smallestDistance = Number.POSITIVE_INFINITY;
 
