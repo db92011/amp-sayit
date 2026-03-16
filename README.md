@@ -32,6 +32,29 @@ npm test
 
 `npm run dev:static` serves only the static site at `http://127.0.0.1:4173`. Use this only for layout work, because OpenAI translation will not run there.
 
+## Cloudflare Pages
+
+`SayIt` is now intended to deploy as its own standalone Cloudflare Pages app on the existing Pages project `sayit`.
+
+Default standalone URL:
+
+`https://amp-sayit.pages.dev`
+
+GitHub auto-deploy is handled by:
+
+- [deploy-pages.yml](/Users/dannybrooking/Documents/GitHub%20=%20master%20copy/projects/SayIt/.github/workflows/deploy-pages.yml)
+
+Add these GitHub repository secrets in the `amp-sayit` repo:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Then set the runtime secret on the Cloudflare Pages project `sayit`:
+
+- `OPENAI_API_KEY`
+
+`OpenAi_SayIt_Secret_Key` is still supported by the server code, but `OPENAI_API_KEY` is the clearest default going forward.
+
 To turn SayIt into an iPhone app with native microphone permissions instead of Safari-managed permissions:
 
 ```bash

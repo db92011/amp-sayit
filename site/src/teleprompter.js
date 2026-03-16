@@ -47,12 +47,22 @@ export class TeleprompterController {
   }
 
   start() {
-    if (this.running || this.lines.length === 0) {
+    if (this.lines.length === 0) {
+      return;
+    }
+
+    const maxScrollTop = this.getMaxScrollTop();
+    if (this.script.scrollTop >= maxScrollTop - 2) {
+      this.reset();
+    }
+
+    if (this.running) {
       return;
     }
 
     this.running = true;
     this.lastTimestamp = 0;
+    this.updateHighlight();
     this.animationFrame = window.requestAnimationFrame(this.tick);
   }
 
@@ -85,11 +95,12 @@ export class TeleprompterController {
 
     const delta = (timestamp - this.lastTimestamp) / 1000;
     this.lastTimestamp = timestamp;
-    this.script.scrollTop += SPEED_MAP[this.speed] * delta;
+    const maxScrollTop = this.getMaxScrollTop();
+    const nextScrollTop = Math.min(this.script.scrollTop + SPEED_MAP[this.speed] * delta, maxScrollTop);
+    this.script.scrollTop = nextScrollTop;
     this.updateHighlight();
 
-    const reachedBottom =
-      this.script.scrollTop + this.script.clientHeight >= this.script.scrollHeight - 4;
+    const reachedBottom = nextScrollTop >= maxScrollTop - 2;
 
     if (reachedBottom) {
       this.stop();
@@ -129,5 +140,9 @@ export class TeleprompterController {
       line.classList.toggle("is-near", line !== activeLine && distance <= nearThreshold);
       line.classList.toggle("is-far", distance > nearThreshold && distance <= farThreshold);
     });
+  }
+
+  getMaxScrollTop() {
+    return Math.max(0, this.script.scrollHeight - this.script.clientHeight);
   }
 }

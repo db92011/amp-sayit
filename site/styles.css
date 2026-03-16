@@ -834,9 +834,9 @@ body.teleprompter-open {
 }
 
 .teleprompter-line.is-active {
-  color: var(--teleprompter-line);
+  color: rgba(205, 255, 165, 0.98);
   transform: scale(1.01);
-  text-shadow: 0 0 20px rgba(174, 235, 133, 0.06);
+  text-shadow: 0 0 24px rgba(174, 235, 133, 0.14);
   opacity: 1;
 }
 

@@ -431,6 +431,10 @@ function openTeleprompter() {
   teleprompterOverlay.hidden = false;
   teleprompterOverlay.setAttribute("aria-hidden", "false");
   document.body.classList.add("teleprompter-open");
+  window.requestAnimationFrame(() => {
+    teleprompter.reset();
+    teleprompter.start();
+  });
 }
 
 function closeTeleprompter() {
