@@ -41,7 +41,11 @@ body {
     -apple-system,
     BlinkMacSystemFont,
     "SF Pro Text",
+    "SF Pro Display",
+    system-ui,
     "Segoe UI",
+    Roboto,
+    Arial,
     sans-serif;
   background:
     radial-gradient(1200px 600px at 10% 0%, rgba(32, 168, 255, 0.16) 0%, transparent 60%),
@@ -135,7 +139,7 @@ button:disabled {
 }
 
 .brandText p {
-  margin: 0;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.35;
@@ -215,6 +219,7 @@ button:disabled {
   font-weight: 650;
   text-align: left;
   color: rgba(0, 0, 0, 0.62);
+  margin: 14px 0 8px 2px;
 }
 
 .field-hint {
@@ -236,6 +241,7 @@ button:disabled {
   padding: 14px 14px;
   min-height: 3.4rem;
   font-size: 16px;
+  outline: none;
   transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
   -webkit-appearance: none;
   appearance: none;
@@ -320,6 +326,7 @@ button:disabled {
   padding: 12px 22px;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 16px;
   font-weight: 800;
   transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
   line-height: 1;
@@ -343,6 +350,13 @@ button:disabled {
 .compact-button {
   width: 100%;
   min-width: 0;
+}
+
+.voice-actions .primary-button {
+  min-height: 58px;
+  border-radius: 22px;
+  font-size: 18px;
+  letter-spacing: 0.2px;
 }
 
 .speed-button.is-active {
@@ -395,7 +409,7 @@ button:disabled {
 
 #counterText {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   color: rgba(0, 0, 0, 0.78);
   white-space: nowrap;
 }
@@ -558,6 +572,7 @@ button:disabled {
 #plusModal .modalActions button {
   border-radius: 999px;
   padding: 10px 16px;
+  font-weight: 650;
 }
 
 body.teleprompter-open {
