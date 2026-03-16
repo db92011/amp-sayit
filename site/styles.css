@@ -100,18 +100,20 @@ button:disabled {
 .brand-section {
   display: grid;
   justify-items: center;
-  padding-top: 0.15rem;
+  padding-top: 0.05rem;
+  padding-bottom: 0.1rem;
 }
 
 .brand-logo {
-  width: 5.6rem;
-  height: 5.6rem;
+  width: min(100%, 11.5rem);
+  height: auto;
   object-fit: contain;
 }
 
 .section-heading {
   display: grid;
   gap: 0.25rem;
+  text-align: center;
 }
 
 .section-label {
@@ -138,6 +140,7 @@ button:disabled {
 .field span {
   font-size: 0.94rem;
   font-weight: 650;
+  text-align: center;
 }
 
 .field-hint {
@@ -156,7 +159,7 @@ button:disabled {
   background: var(--input-bg);
   color: var(--text);
   padding: 0.95rem 1rem;
-  min-height: 3.9rem;
+  min-height: 3.45rem;
   transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
   -webkit-appearance: none;
   appearance: none;
@@ -170,6 +173,11 @@ button:disabled {
 
 .field-large textarea {
   min-height: 10rem;
+}
+
+.field-short input {
+  width: min(100%, 12rem);
+  margin: 0 auto;
 }
 
 .field input::placeholder,
@@ -193,6 +201,7 @@ button:disabled {
   margin: 0;
   color: var(--muted);
   line-height: 1.55;
+  text-align: center;
 }
 
 .voice-preview {
@@ -205,6 +214,10 @@ button:disabled {
   color: var(--text);
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.voice-section-top {
+  gap: 0.95rem;
 }
 
 .voice-actions {

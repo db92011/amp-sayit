@@ -3,11 +3,8 @@ import { TeleprompterController } from "./teleprompter.js";
 import { requestTranslation } from "./translation-service.js";
 
 const STORAGE_KEY = "sayit-draft-v2";
-const DEFAULT_TONES = [];
-const TONES = ["calm", "friendly", "professional", "direct", "confident", "funny", "gentle", "clear"];
 
 const form = document.querySelector("#intake-form");
-const toneGroup = document.querySelector("#tone-group");
 const voicePreview = document.querySelector("#voice-preview");
 const copyMessageButton = document.querySelector("#copy-message");
 const closeTeleprompterButton = document.querySelector("#close-teleprompter");
@@ -21,8 +18,6 @@ const fields = {
   situation: document.querySelector("#situation"),
   message: document.querySelector("#message"),
   intent: document.querySelector("#intent"),
-  outcome: document.querySelector("#outcome"),
-  barrier: document.querySelector("#barrier"),
   afterState: document.querySelector("#after-state")
 };
 
@@ -32,7 +27,6 @@ const teleprompter = new TeleprompterController({
   highlightToggle: document.querySelector("#highlight-toggle")
 });
 
-let selectedTones = [...DEFAULT_TONES];
 let latestMessageText = "";
 
 function updateVoicePreview(text = "") {
@@ -65,29 +59,6 @@ function closeTeleprompter() {
   document.body.classList.remove("teleprompter-open");
 }
 
-function renderToneButtons() {
-  toneGroup.innerHTML = "";
-
-  for (const tone of TONES) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `chip${selectedTones.includes(tone) ? " is-active" : ""}`;
-    button.dataset.tone = tone;
-    button.textContent = tone;
-    button.addEventListener("click", () => {
-      if (selectedTones.includes(tone)) {
-        selectedTones = selectedTones.filter((item) => item !== tone);
-      } else {
-        selectedTones = [...selectedTones, tone];
-      }
-
-      persistDraft();
-      renderToneButtons();
-    });
-    toneGroup.appendChild(button);
-  }
-}
-
 function collectData() {
   const transcript = fields.message.value.trim();
   const situation = fields.situation.value.trim();
@@ -98,10 +69,8 @@ function collectData() {
     situation,
     message: transcript || situation,
     intent: fields.intent.value,
-    outcome: fields.outcome.value,
-    barrier: fields.barrier.value,
-    afterState: fields.afterState.value,
-    tones: selectedTones
+    outcome: fields.afterState.value,
+    afterState: fields.afterState.value
   };
 }
 
@@ -152,8 +121,7 @@ async function generateTranslation({ openTeleprompterOnComplete = false } = {}) 
 function persistDraft() {
   const payload = {
     ...collectData(),
-    message: fields.message.value.trim(),
-    tones: selectedTones
+    message: fields.message.value.trim()
   };
 
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -173,11 +141,6 @@ function hydrateDraft() {
       }
     }
 
-    if (Array.isArray(draft.tones)) {
-      selectedTones = [...draft.tones];
-    }
-
-    renderToneButtons();
     updateVoicePreview(draft.message || "");
 
     if ((draft.message || "").trim() || (draft.situation || "").trim()) {
@@ -194,14 +157,11 @@ function resetForm() {
   speechController?.stop();
   form.reset();
   fields.message.value = "";
-  selectedTones = [...DEFAULT_TONES];
-  renderToneButtons();
   updateVoicePreview("");
   clearOutputs();
   window.localStorage.removeItem(STORAGE_KEY);
 }
 
-renderToneButtons();
 clearOutputs();
 
 form.addEventListener("submit", (event) => {

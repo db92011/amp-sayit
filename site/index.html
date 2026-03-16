@@ -29,13 +29,38 @@
           <section class="brand-section">
             <img
               class="brand-logo"
-              src="./assets/sayit-app-icon.png"
+              src="./assets/SayIt-hero.png"
               alt="SayIt!"
             />
           </section>
 
+          <section class="app-section voice-section voice-section-top">
+            <div class="section-heading">
+              <h2>Talk to me. I've got your back.</h2>
+            </div>
+            <p id="voice-status" class="voice-status">
+              When you're ready, just say it, even if you're mad. Get your message across, and we'll clean it up for you.
+            </p>
+            <p id="voice-preview" class="voice-preview">Your spoken draft will show up here as you talk.</p>
+            <div class="voice-actions">
+              <button
+                type="button"
+                id="voice-start"
+                class="secondary-button compact-button"
+              >
+                Record
+              </button>
+              <button type="button" id="voice-stop" class="secondary-button compact-button">
+                Stop
+              </button>
+              <button type="button" id="reset-form" class="ghost-button compact-button">
+                Reset
+              </button>
+            </div>
+          </section>
+
           <section class="app-section">
-            <label class="field">
+            <label class="field field-short">
               <span>Who are you talking to?</span>
               <input
                 id="recipient"
@@ -64,7 +89,7 @@
             </label>
 
             <input id="message" name="message" type="hidden" />
-        
+
             <label class="field">
               <span>Core intent</span>
               <select id="intent" name="intent">
@@ -80,46 +105,6 @@
             </label>
 
             <label class="field">
-              <span>What outcome do you want?</span>
-              <select id="outcome" name="outcome">
-                <option value="">Select an outcome</option>
-                <option>Avoid an argument</option>
-                <option>Be taken seriously</option>
-                <option>Sound calm</option>
-                <option>Sound professional</option>
-                <option>Sound confident</option>
-                <option>Be understood clearly</option>
-                <option>Set a boundary respectfully</option>
-                <option>Make someone laugh</option>
-                <option>Defuse tension</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Choose the translation tone</span>
-              <small class="field-hint">Pick one or as many as you want.</small>
-              <div id="tone-group" class="chip-group"></div>
-            </label>
-
-            <label class="field">
-              <span>What is the main context of the conversation?</span>
-              <select id="barrier" name="barrier">
-                <option value="">Select the main context</option>
-                <option>Work</option>
-                <option>Partner or relationship</option>
-                <option>Parenting or family</option>
-                <option>Friendship</option>
-                <option>Customer or client</option>
-                <option>Boundary setting</option>
-                <option>Conflict repair</option>
-                <option>Money</option>
-                <option>Scheduling</option>
-                <option>Health or care</option>
-                <option>Something sensitive</option>
-              </select>
-            </label>
-
-            <label class="field">
               <span>How do I want this message to come across?</span>
               <select id="after-state" name="afterState">
                 <option value="">Select how I want it to come across</option>
@@ -131,8 +116,8 @@
                 <option>Confident</option>
                 <option>Funny</option>
                 <option>Easy to understand</option>
-                </select>
-              </label>
+              </select>
+            </label>
           </section>
 
           <section class="app-section context-section">
@@ -145,31 +130,6 @@
                 placeholder="What is this conversation about? Give me the main context."
               ></textarea>
             </label>
-          </section>
-
-          <section class="app-section voice-section">
-            <div class="section-heading">
-              <h2>Talk to me. I've got your back.</h2>
-            </div>
-            <p id="voice-status" class="voice-status">
-              When you're ready, talk to SayIt! and get your message across, and we'll clean it up.
-            </p>
-            <p id="voice-preview" class="voice-preview">Your spoken draft will show up here as you talk.</p>
-            <div class="voice-actions">
-              <button
-                type="button"
-                id="voice-start"
-                class="secondary-button compact-button"
-              >
-                Record
-              </button>
-              <button type="button" id="voice-stop" class="secondary-button compact-button">
-                Stop
-              </button>
-              <button type="button" id="reset-form" class="ghost-button compact-button">
-                Reset
-              </button>
-            </div>
           </section>
 
           <section class="app-section action-section">

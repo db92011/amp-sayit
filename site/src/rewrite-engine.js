@@ -97,6 +97,97 @@ const OUTCOME_NOTES = {
   "Defuse tension": "Acknowledge the temperature, then guide back to the point."
 };
 
+const RELATIONSHIP_GUIDANCE = {
+  "Spouse or partner": {
+    lead: "I care about us, so I want to say this with love and respect.",
+    notes: [
+      "Keep the message warm, respectful, and focused on repair instead of blame.",
+      "Speak to the relationship, not just the problem."
+    ],
+    tones: ["gentle", "clear", "calm"]
+  },
+  "Child or teenager": {
+    lead: "I want to be clear and steady so this lands with care.",
+    notes: [
+      "Use simple language and keep the emotional temperature low.",
+      "Lead with care and keep the boundary easy to understand."
+    ],
+    tones: ["clear", "gentle", "calm"]
+  },
+  Friend: {
+    lead: "I value our friendship, and I want to say this honestly and kindly.",
+    notes: [
+      "Stay direct without sounding cold.",
+      "Make it sound human and easy to hear."
+    ],
+    tones: ["friendly", "clear", "gentle"]
+  },
+  Coworker: {
+    lead: "I want to keep this clear, respectful, and easy to work from.",
+    notes: [
+      "Keep it constructive and specific.",
+      "Favor clarity over emotional detail."
+    ],
+    tones: ["professional", "clear", "direct"]
+  },
+  "Boss or supervisor": {
+    lead: "I want to be respectful and clear while still being honest.",
+    notes: [
+      "Keep the point grounded in facts and next steps.",
+      "Be respectful without burying the real concern."
+    ],
+    tones: ["professional", "clear", "confident"]
+  },
+  "Employee or subordinate": {
+    lead: "I want this to be clear, respectful, and supportive.",
+    notes: [
+      "Be direct about the issue and calm about the delivery.",
+      "Make the next step easy to follow."
+    ],
+    tones: ["clear", "professional", "gentle"]
+  },
+  Customer: {
+    lead: "I want to keep this clear, helpful, and respectful.",
+    notes: [
+      "Reduce friction and guide toward a practical next step.",
+      "Keep the message concise and service-minded."
+    ],
+    tones: ["professional", "friendly", "clear"]
+  },
+  Client: {
+    lead: "I want this to sound thoughtful, clear, and dependable.",
+    notes: [
+      "Keep the message polished and specific.",
+      "Protect trust while addressing the real point."
+    ],
+    tones: ["professional", "clear", "confident"]
+  },
+  Stranger: {
+    lead: "I want to keep this simple, respectful, and easy to understand.",
+    notes: [
+      "Use plain language and avoid extra detail.",
+      "Keep boundaries clear and the message brief."
+    ],
+    tones: ["clear", "direct", "calm"]
+  },
+  "Online conversation": {
+    lead: "I want to keep this grounded, clear, and hard to misread.",
+    notes: [
+      "Avoid sarcasm and say the point plainly.",
+      "Shorter sentences will travel better here."
+    ],
+    tones: ["clear", "direct", "calm"]
+  },
+  "Social media comment": {
+    lead: "I want this to be clear, brief, and less reactive.",
+    notes: [
+      "Keep it short and do not over-explain.",
+      "Say enough to land the point, then stop."
+    ],
+    tones: ["direct", "clear", "calm"]
+  }
+};
+
 const TONE_GUIDANCE = {
   calm: {
     label: "Calm",
@@ -180,7 +271,16 @@ export function detectIntent({ message = "", situation = "", outcome = "" }) {
   return winner;
 }
 
-function chooseTones(tones = []) {
+function chooseTones(tones = [], relationship = "") {
+  if (Array.isArray(tones) && tones.length > 0) {
+    return tones;
+  }
+
+  const relationshipTones = RELATIONSHIP_GUIDANCE[relationship]?.tones;
+  if (Array.isArray(relationshipTones) && relationshipTones.length > 0) {
+    return relationshipTones;
+  }
+
   if (!Array.isArray(tones) || tones.length === 0) {
     return ["clear", "calm"];
   }
@@ -189,8 +289,13 @@ function chooseTones(tones = []) {
 }
 
 function buildToneLead(tones, relationship) {
-  const active = chooseTones(tones);
+  const active = chooseTones(tones, relationship);
+  const relationshipLead = RELATIONSHIP_GUIDANCE[relationship]?.lead;
   const parts = [];
+
+  if (relationshipLead) {
+    parts.push(relationshipLead);
+  }
 
   if (active.includes("friendly")) {
     parts.push(relationship ? `I value our ${relationship.toLowerCase()} dynamic.` : "I value our relationship.");
@@ -324,6 +429,10 @@ function buildNotes({ barrier, outcome, beforeState, tones, intensity }) {
   return notes.slice(0, 4);
 }
 
+function relationshipNotes(relationship = "") {
+  return RELATIONSHIP_GUIDANCE[relationship]?.notes || [];
+}
+
 function buildSummary({ recipient, relationship, situation, barrier, outcome }) {
   return [
     {
@@ -405,7 +514,7 @@ export function buildTranslation(input) {
   const detectedIntent = detectIntent(input);
   const intentId = input.intent && input.intent !== "auto" ? input.intent : detectedIntent.id;
   const intentData = INTENT_COPY[intentId] || INTENT_COPY.explain;
-  const tones = chooseTones(input.tones);
+  const tones = chooseTones(input.tones, input.relationship);
   const intensity = detectIntensity(message);
   const cleanedMessage = condenseMessage(message);
   const toneLead = buildToneLead(tones, input.relationship);
@@ -419,6 +528,7 @@ export function buildTranslation(input) {
     tones,
     intensity
   });
+  const notesWithRelationship = [...relationshipNotes(input.relationship), ...notes].slice(0, 4);
 
   const mainParts = [
     toneLead,
@@ -443,7 +553,7 @@ export function buildTranslation(input) {
     primary,
     concise,
     proof,
-    notes,
+    notes: notesWithRelationship,
     tones,
     toneMap,
     conversationMap: buildConversationMap(input, intentLabel),
