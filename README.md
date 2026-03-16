@@ -24,10 +24,13 @@ SayIt! is a first-build communication translator that turns a messy draft into a
 
 ```bash
 npm run dev
+npm run dev:static
 npm test
 ```
 
-`npm run dev` serves the static site at `http://127.0.0.1:4173`.
+`npm run dev` runs Cloudflare Pages locally at `http://127.0.0.1:4173`, including the `/api/translate` function.
+
+`npm run dev:static` serves only the static site at `http://127.0.0.1:4173`. Use this only for layout work, because OpenAI translation will not run there.
 
 To turn SayIt into an iPhone app with native microphone permissions instead of Safari-managed permissions:
 
@@ -49,11 +52,7 @@ For the mobile app-style review inside VS Code Simple Browser, use:
 
 `http://127.0.0.1:4173/?preview=app-mobile`
 
-For full Cloudflare-style local verification, run Pages dev separately if `wrangler` is installed in the operator environment:
-
-```bash
-wrangler pages dev site
-```
+If `.dev.vars` is missing or `OPENAI_API_KEY` is not set, SayIt will fall back to the local rewrite engine. The app now surfaces that fallback state in the UI so it is obvious when OpenAI is not active.
 
 ## Environment
 

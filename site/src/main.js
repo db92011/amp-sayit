@@ -42,6 +42,7 @@ const teleprompter = new TeleprompterController({
   script: document.querySelector("#teleprompter-script"),
   highlightToggle: document.querySelector("#highlight-toggle")
 });
+const voiceStatusNode = document.querySelector("#voice-status");
 
 let latestMessageText = "";
 let continueBusy = false;
@@ -410,6 +411,14 @@ function setTeleprompterSummary(text = "") {
     "Once you push Generate, teleprompter will pop up. You can read from it directly by saying, \"I want to read from some notes,\" or \"This was important, so I wrote some notes.\" Or you can copy and paste it into a message or email.";
 }
 
+function setVoiceStatus(text) {
+  if (!voiceStatusNode) {
+    return;
+  }
+
+  voiceStatusNode.textContent = text;
+}
+
 function setCopyButtonLabel(label) {
   copyMessageButton.textContent = label;
 }
@@ -456,11 +465,26 @@ function clearOutputs() {
   teleprompter.setLines([]);
 }
 
-function updateOutputs(translation) {
+function updateOutputs(translation, meta = {}) {
   latestMessageText = translation?.primary || "";
   copyMessageButton.disabled = !latestMessageText;
   setCopyButtonLabel("Copy");
-  setTeleprompterSummary();
+  if (meta.mode === "openai") {
+    setTeleprompterSummary();
+    setVoiceStatus("OpenAI rewrite is active. You can adjust your message and generate again any time.");
+  } else if (meta.source === "local" || meta.mode === "rule-based") {
+    const fallbackReason = String(meta.fallbackReason || meta.reason || "").trim();
+    setTeleprompterSummary(
+      fallbackReason
+        ? `OpenAI is not active here yet, so you're seeing the local fallback rewrite. Reason: ${fallbackReason}`
+        : "OpenAI is not active here yet, so you're seeing the local fallback rewrite."
+    );
+    setVoiceStatus(
+      "OpenAI is not configured in this local preview yet. Add your key to .dev.vars and run npm run dev to use the real rewrite."
+    );
+  } else {
+    setTeleprompterSummary();
+  }
   teleprompter.setLines(translation?.teleprompterLines || []);
 }
 
@@ -481,7 +505,7 @@ async function generateTranslation({ openTeleprompterOnComplete = false } = {}) 
 
   try {
     const result = await requestTranslation(payload);
-    updateOutputs(result.translation);
+    updateOutputs(result.translation, result.meta);
     if (openTeleprompterOnComplete && result?.translation?.primary) {
       openTeleprompter();
     }

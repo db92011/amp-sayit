@@ -8,7 +8,8 @@
     "cap:copy": "npx cap copy",
     "cap:open:ios": "npx cap open ios",
     "cap:sync": "npx cap sync ios",
-    "dev": "python3 -m http.server 4173 --bind 127.0.0.1 -d site",
+    "dev": "wrangler pages dev site --ip 127.0.0.1 --port 4173 --live-reload",
+    "dev:static": "python3 -m http.server 4173 --bind 127.0.0.1 -d site",
     "test": "node --test test/*.test.js",
     "test:smoke": "node test/preview-smoke.mjs"
   },

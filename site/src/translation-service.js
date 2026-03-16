@@ -43,7 +43,10 @@ export async function requestTranslation(payload) {
         source: "api",
         label: "Pages Function API",
         runtime: body.meta?.runtime || "unknown",
-        mode: body.meta?.mode || "rule-based"
+        mode: body.meta?.mode || "rule-based",
+        providerConfigured: body.meta?.providerConfigured === true,
+        behaviorConfigured: body.meta?.behaviorConfigured === true,
+        fallbackReason: body.meta?.fallbackReason || ""
       }
     };
   } catch (error) {
