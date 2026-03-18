@@ -51,7 +51,8 @@ test("buildTranslation treats after-state as delivery style instead of outcome t
   });
 
   assert.doesNotMatch(translation.primary, /What I want from this conversation is simple: funny\./i);
-  assert.match(translation.primary, /feel funny instead of reactive/i);
+  assert.doesNotMatch(translation.primary, /feel funny instead of reactive/i);
+  assert.match(translation.primary, /I want to say this clearly and respectfully|I care about us/i);
 });
 
 test("buildTranslation rewrites heated cleanup drafts instead of echoing them back", () => {

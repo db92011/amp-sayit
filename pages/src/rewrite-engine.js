@@ -339,11 +339,7 @@ function buildOutcomeCloser(outcome = "", afterState = "") {
     return "I want to be straightforward about what I need.";
   }
 
-  if (afterState) {
-    return `My goal is for this to feel ${afterState.toLowerCase()} instead of reactive.`;
-  }
-
-  return "I want this message to be easy to hear and hard to misread.";
+  return "";
 }
 
 function condenseMessage(message = "") {

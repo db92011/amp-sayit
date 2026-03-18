@@ -583,15 +583,13 @@ function openTeleprompter({ autoStart = true } = {}) {
     teleprompter.reset();
     syncTeleprompterControls();
     if (autoStart && teleprompter.start()) {
-      setTeleprompterSummary("Teleprompter is live. You can pause, reset, or change speed any time.");
+      setTeleprompterSummary("Teleprompter is live. You can pause or change speed any time.");
       syncTeleprompterControls();
       return;
     }
 
     if (teleprompter.hasLines()) {
-      setTeleprompterSummary(
-        "Your message is ready. If it does not need to scroll, you can read it here or use Copy."
-      );
+      setTeleprompterSummary("Your message is ready. Tap Run when you want it to start scrolling.");
     }
     syncTeleprompterControls();
   };
@@ -757,7 +755,7 @@ enforceAccessGate();
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   persistDraft();
-  await generateTranslation({ openTeleprompterOnComplete: true });
+  await generateTranslation({ openTeleprompterOnComplete: false });
 });
 
 form.addEventListener("input", () => {
@@ -771,7 +769,7 @@ form.addEventListener("change", () => {
 document.querySelector("#reset-form").addEventListener("click", resetForm);
 closeTeleprompterButton.addEventListener("click", closeTeleprompter);
 openTeleprompterButton?.addEventListener("click", () => {
-  openTeleprompter({ autoStart: true });
+  openTeleprompter({ autoStart: false });
 });
 plusButton?.addEventListener("click", (event) => {
   event.preventDefault();
