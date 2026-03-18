@@ -111,10 +111,6 @@ button:disabled {
   max-width: 430px;
 }
 
-.browser-hosted .page {
-  padding-top: 26px;
-}
-
 .header {
   display: flex;
   align-items: center;
@@ -972,10 +968,6 @@ body.teleprompter-open {
     padding-bottom: calc(12px + var(--counter-h) + var(--safe-bottom));
   }
 
-  .browser-hosted .page {
-    padding-top: 16px;
-  }
-
   .shell {
     max-width: none;
     width: 100vw;
@@ -996,7 +988,7 @@ body.teleprompter-open {
   }
 
   .header {
-    padding: max(14px, env(safe-area-inset-top, 0px)) 14px 14px;
+    padding: 14px 14px 14px;
   }
 
   .brand {
