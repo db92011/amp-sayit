@@ -2,22 +2,52 @@ import { createSpeechController } from "./speech.js";
 import { TeleprompterController } from "./teleprompter.js";
 import { requestTranslation } from "./translation-service.js";
 
-const STORAGE_KEY = "sayit-draft-v3";
+const STORAGE_KEY = "sayit-draft-v4";
 const SAYIT_PRO_ACTIVE_KEY = "sayit_pro_active";
 const SAYIT_PRO_EMAIL_KEY = "sayit_pro_email";
 const SAYIT_DEVICE_ID_KEY = "sayit_device_id";
-const SAYIT_API_BASE = "https://circlethepeople.com";
+
+function safeTrim(value = "") {
+  return String(value || "").trim();
+}
+
+function stripTrailingSlashes(value = "") {
+  return safeTrim(value).replace(/\/+$/, "");
+}
+
+function getConfiguredApiBase() {
+  const globalBase = safeTrim(window.__SAYIT_API_BASE__);
+  if (globalBase) {
+    return stripTrailingSlashes(globalBase);
+  }
+
+  const meta = document.querySelector('meta[name="sayit-api-base"]');
+  const metaBase = safeTrim(meta?.getAttribute("content"));
+  if (metaBase) {
+    return stripTrailingSlashes(metaBase);
+  }
+
+  return stripTrailingSlashes(window.location.origin || "");
+}
+
+const SAYIT_API_BASE = getConfiguredApiBase();
 const SAYIT_PLAN_URL = `${SAYIT_API_BASE}/api/plan`;
 const SAYIT_REMOVE_OLDEST_URL = `${SAYIT_API_BASE}/api/devices/remove-oldest`;
 const SAYIT_CHECKOUT_URL = `${SAYIT_API_BASE}/api/create-checkout-link`;
 
 const form = document.querySelector("#intake-form");
 const voicePreview = document.querySelector("#voice-preview");
-const copyMessageButton = document.querySelector("#copy-message");
+const copyResultButton = document.querySelector("#copy-result");
+const teleprompterCopyButton = document.querySelector("#copy-message");
 const closeTeleprompterButton = document.querySelector("#close-teleprompter");
 const openTeleprompterButton = document.querySelector("#open-teleprompter");
 const teleprompterOverlay = document.querySelector("#teleprompter-overlay");
 const teleprompterSummary = document.querySelector("#teleprompter-summary");
+const teleprompterPlaybackButton = document.querySelector("#teleprompter-playback");
+const teleprompterSpeedToggleButton = document.querySelector("#teleprompter-speed-toggle");
+const teleprompterSpeedGroup = document.querySelector("#speed-group");
+const resultField = document.querySelector("#result");
+const charCount = document.querySelector("#charCount");
 const submitButton = document.querySelector("#translate-action");
 const plusButton = document.querySelector("#plusBtn");
 const plusModal = document.querySelector("#plusModal");
@@ -41,13 +71,39 @@ const fields = {
 const teleprompter = new TeleprompterController({
   container: document.querySelector("#teleprompter"),
   script: document.querySelector("#teleprompter-script"),
-  highlightToggle: document.querySelector("#highlight-toggle")
+  highlightToggle: document.querySelector("#highlight-toggle"),
+  onStateChange: () => syncTeleprompterControls()
 });
+
 const voiceStatusNode = document.querySelector("#voice-status");
 
 let latestMessageText = "";
 let continueBusy = false;
 let removeBusy = false;
+let appLocked = false;
+
+function setAppLocked(locked) {
+  appLocked = Boolean(locked);
+  document.body.classList.toggle("app-locked", appLocked);
+
+  for (const field of Object.values(fields)) {
+    if (field) {
+      field.disabled = appLocked;
+    }
+  }
+
+  if (submitButton) {
+    submitButton.disabled = appLocked;
+  }
+
+  if (copyResultButton) {
+    copyResultButton.disabled = appLocked || !latestMessageText;
+  }
+
+  if (openTeleprompterButton) {
+    openTeleprompterButton.disabled = appLocked || !latestMessageText;
+  }
+}
 
 function getOrCreateDeviceId() {
   const existing = String(window.localStorage.getItem(SAYIT_DEVICE_ID_KEY) || "").trim();
@@ -83,6 +139,7 @@ function setSayItProActive(email = "") {
   if (email) {
     window.localStorage.setItem(SAYIT_PRO_EMAIL_KEY, email);
   }
+  setAppLocked(false);
   refreshPlusUi();
 }
 
@@ -91,8 +148,8 @@ function refreshPlusUi() {
     return;
   }
 
-  counterText.textContent = isSayItProActive() ? "SayIt! Pro active" : "Start SayIt! Pro";
-  plusButton.textContent = "SayIt!+";
+  counterText.textContent = isSayItProActive() ? "Pro active" : "Register";
+  plusButton.textContent = "Register";
 }
 
 function showPlusModal() {
@@ -120,6 +177,10 @@ function showPlusModal() {
 
 function hidePlusModal() {
   if (!plusModal) {
+    return;
+  }
+
+  if (appLocked && !isSayItProActive()) {
     return;
   }
 
@@ -212,7 +273,7 @@ async function checkPlan(email) {
 async function removeOldestDevice(email) {
   const normalizedEmail = String(email || "").trim().toLowerCase();
   if (removeBusy) {
-    return { ok: false, message: "Please wait…" };
+    return { ok: false, message: "Please wait..." };
   }
 
   removeBusy = true;
@@ -265,7 +326,7 @@ function showDeviceLimitUi(message, email) {
     "<strong>Device limit reached</strong><br>" +
       escapeHtml(seatsLine) +
       "<br><br>To use SayIt! Pro on this device, remove your oldest device seat.<br>" +
-      '<span style="opacity:.85;">This happens instantly here — no new screens.</span>'
+      '<span style="opacity:.85;">This happens instantly here - no new screens.</span>'
   );
 
   if (!manageDevicesButton) {
@@ -276,7 +337,7 @@ function showDeviceLimitUi(message, email) {
   manageDevicesButton.textContent = "Remove your oldest device";
   manageDevicesButton.onclick = async (event) => {
     event.preventDefault();
-    setDeviceMessage("<strong>Device limit reached</strong><br>Removing your oldest device…");
+    setDeviceMessage("<strong>Device limit reached</strong><br>Removing your oldest device...");
     const result = await removeOldestDevice(email);
 
     if (!result.ok) {
@@ -284,7 +345,7 @@ function showDeviceLimitUi(message, email) {
       return;
     }
 
-    setDeviceMessage("<strong>Device limit reached</strong><br>Oldest device removed. Unlocking this device…");
+    setDeviceMessage("<strong>Device limit reached</strong><br>Oldest device removed. Unlocking this device...");
     try {
       const nextPlan = await checkPlan(email);
       if (nextPlan.plan === "plus" && nextPlan.allowed !== false) {
@@ -402,26 +463,84 @@ function syncPlusStateFromUrl() {
 
 function updateVoicePreview(text = "") {
   const nextText = String(text || "").trim();
-  voicePreview.textContent = nextText;
+  voicePreview.textContent = nextText ? "Voice draft captured. You can edit it in the message box below." : "";
   voicePreview.classList.toggle("has-content", Boolean(nextText));
 }
 
 function setTeleprompterSummary(text = "") {
   teleprompterSummary.textContent =
     text ||
-    "Once you push Generate, teleprompter will pop up. You can read from it directly by saying, \"I want to read from some notes,\" or \"This was important, so I wrote some notes.\" Or you can copy and paste it into a message or email.";
+    "Copy or use teleprompter once your message is ready.";
 }
 
 function setVoiceStatus(text) {
-  if (!voiceStatusNode) {
-    return;
+  if (voiceStatusNode) {
+    voiceStatusNode.textContent = text;
   }
-
-  voiceStatusNode.textContent = text;
 }
 
 function setCopyButtonLabel(label) {
-  copyMessageButton.textContent = label;
+  if (copyResultButton) {
+    copyResultButton.textContent = label;
+  }
+  if (teleprompterCopyButton) {
+    teleprompterCopyButton.textContent = label;
+  }
+}
+
+function setResultText(text = "") {
+  const nextText = String(text || "");
+  if (resultField) {
+    resultField.value = nextText;
+  }
+  if (charCount) {
+    charCount.textContent = String(nextText.length);
+  }
+}
+
+function syncTeleprompterControls() {
+  const hasLines = teleprompter.hasLines();
+  const canScroll = teleprompter.canScroll();
+  const isRunning = teleprompter.isRunning();
+
+  if (copyResultButton) {
+    copyResultButton.disabled = !latestMessageText;
+    copyResultButton.classList.toggle("is-active", Boolean(latestMessageText));
+  }
+  if (teleprompterCopyButton) {
+    teleprompterCopyButton.disabled = !latestMessageText;
+    teleprompterCopyButton.classList.toggle("is-active", Boolean(latestMessageText));
+  }
+
+  if (teleprompterPlaybackButton) {
+    teleprompterPlaybackButton.disabled = !hasLines;
+    teleprompterPlaybackButton.classList.toggle("is-active", isRunning);
+
+    if (!hasLines) {
+      teleprompterPlaybackButton.textContent = "Run";
+    } else if (!canScroll) {
+      teleprompterPlaybackButton.textContent = "Read";
+    } else {
+      teleprompterPlaybackButton.textContent = isRunning ? "Pause" : "Run";
+    }
+  }
+
+  if (teleprompterSpeedToggleButton) {
+    const label = teleprompter.speed.charAt(0).toUpperCase() + teleprompter.speed.slice(1);
+    teleprompterSpeedToggleButton.textContent = `Speed: ${label}`;
+    teleprompterSpeedToggleButton.disabled = !hasLines;
+  }
+}
+
+function setSpeedMenuOpen(open) {
+  if (!teleprompterSpeedToggleButton || !teleprompterSpeedGroup) {
+    return;
+  }
+
+  const isOpen = Boolean(open);
+  teleprompterSpeedGroup.hidden = !isOpen;
+  teleprompterSpeedToggleButton.setAttribute("aria-expanded", String(isOpen));
+  teleprompterSpeedToggleButton.classList.toggle("is-active", isOpen);
 }
 
 function syncTeleprompterReadiness() {
@@ -433,8 +552,9 @@ function syncTeleprompterReadiness() {
   openTeleprompterButton.hidden = !ready;
   openTeleprompterButton.disabled = !ready;
   openTeleprompterButton.textContent = teleprompter.canScroll()
-    ? "Open teleprompter"
+    ? "Use teleprompter"
     : "Read message";
+  syncTeleprompterControls();
 }
 
 function openTeleprompter({ autoStart = true } = {}) {
@@ -448,8 +568,10 @@ function openTeleprompter({ autoStart = true } = {}) {
 
   const afterLayout = () => {
     teleprompter.reset();
+    syncTeleprompterControls();
     if (autoStart && teleprompter.start()) {
       setTeleprompterSummary("Teleprompter is live. You can pause, reset, or change speed any time.");
+      syncTeleprompterControls();
       return;
     }
 
@@ -458,6 +580,7 @@ function openTeleprompter({ autoStart = true } = {}) {
         "Your message is ready. If it does not need to scroll, you can read it here or use Copy."
       );
     }
+    syncTeleprompterControls();
   };
 
   window.requestAnimationFrame(() => {
@@ -467,9 +590,11 @@ function openTeleprompter({ autoStart = true } = {}) {
 
 function closeTeleprompter() {
   teleprompter.pause();
+  setSpeedMenuOpen(false);
   teleprompterOverlay.hidden = true;
   teleprompterOverlay.setAttribute("aria-hidden", "true");
   document.body.classList.remove("teleprompter-open");
+  syncTeleprompterControls();
 }
 
 function collectData() {
@@ -491,7 +616,7 @@ function collectData() {
 function clearOutputs() {
   closeTeleprompter();
   latestMessageText = "";
-  copyMessageButton.disabled = true;
+  setResultText("");
   setCopyButtonLabel("Copy");
   setTeleprompterSummary("");
   teleprompter.setLines([]);
@@ -500,8 +625,9 @@ function clearOutputs() {
 
 function updateOutputs(translation, meta = {}) {
   latestMessageText = translation?.primary || "";
-  copyMessageButton.disabled = !latestMessageText;
+  setResultText(latestMessageText);
   setCopyButtonLabel("Copy");
+
   if (meta.mode === "openai") {
     setTeleprompterSummary();
     setVoiceStatus("OpenAI rewrite is active. You can adjust your message and generate again any time.");
@@ -518,6 +644,7 @@ function updateOutputs(translation, meta = {}) {
   } else {
     setTeleprompterSummary();
   }
+
   teleprompter.setLines(translation?.teleprompterLines || []);
   syncTeleprompterReadiness();
 }
@@ -577,7 +704,6 @@ function hydrateDraft() {
     }
 
     updateVoicePreview(draft.message || "");
-
     return true;
   } catch {
     return false;
@@ -593,10 +719,27 @@ function resetForm() {
   window.localStorage.removeItem(STORAGE_KEY);
 }
 
+async function copyLatestMessage() {
+  if (!latestMessageText) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(latestMessageText);
+    setCopyButtonLabel("Copied");
+    window.setTimeout(() => {
+      setCopyButtonLabel("Copy");
+    }, 1200);
+  } catch {
+    setCopyButtonLabel("Copy failed");
+  }
+}
+
 clearOutputs();
 syncPlusStateFromUrl();
 refreshPlusUi();
 syncPlusFromServer();
+setAppLocked(false);
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -659,20 +802,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-copyMessageButton.addEventListener("click", async () => {
-  if (!latestMessageText) {
-    return;
-  }
+copyResultButton?.addEventListener("click", () => {
+  void copyLatestMessage();
+});
 
-  try {
-    await navigator.clipboard.writeText(latestMessageText);
-    setCopyButtonLabel("Copied");
-    window.setTimeout(() => {
-      setCopyButtonLabel("Copy");
-    }, 1200);
-  } catch {
-    setCopyButtonLabel("Copy failed");
-  }
+teleprompterCopyButton?.addEventListener("click", () => {
+  void copyLatestMessage();
 });
 
 const speechController = createSpeechController({
@@ -690,15 +825,16 @@ document.querySelector("#voice-start").addEventListener("click", () => {
   void speechController?.start();
 });
 
-document.querySelector("#highlight-toggle").addEventListener("change", () => {
-  document.querySelector(".teleprompter-toggle")?.classList.toggle(
-    "is-active",
-    document.querySelector("#highlight-toggle")?.checked === true
-  );
-  teleprompter.updateHighlight();
+teleprompterSpeedToggleButton?.addEventListener("click", () => {
+  if (teleprompterSpeedToggleButton.disabled) {
+    return;
+  }
+
+  const nextOpen = teleprompterSpeedGroup?.hidden !== false;
+  setSpeedMenuOpen(nextOpen);
 });
 
-document.querySelector("#speed-group").addEventListener("click", (event) => {
+teleprompterSpeedGroup?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-speed]");
   if (!button) {
     return;
@@ -708,33 +844,43 @@ document.querySelector("#speed-group").addEventListener("click", (event) => {
     node.classList.toggle("is-active", node === button);
   });
   teleprompter.setSpeed(button.dataset.speed);
+  setSpeedMenuOpen(false);
 });
 
-document.querySelector("#teleprompter-start").addEventListener("click", () => {
+teleprompterPlaybackButton?.addEventListener("click", () => {
+  if (teleprompter.isRunning()) {
+    teleprompter.pause();
+    setTeleprompterSummary("Teleprompter paused. Tap Run when you want to keep going.");
+    syncTeleprompterControls();
+    return;
+  }
+
   if (!teleprompter.start()) {
     setTeleprompterSummary(
       teleprompter.hasLines()
         ? "This message is short enough to read without scrolling. Use Copy if that is easier."
         : "Generate a message first to load teleprompter mode."
     );
+    syncTeleprompterControls();
     return;
   }
-  setTeleprompterSummary("Teleprompter is live. You can pause, reset, or change speed any time.");
+  setTeleprompterSummary("Teleprompter is live. You can pause or change speed any time.");
+  syncTeleprompterControls();
 });
 
-document.querySelector("#teleprompter-pause").addEventListener("click", () => {
-  teleprompter.pause();
-});
+document.addEventListener("click", (event) => {
+  if (!teleprompterSpeedGroup || teleprompterSpeedGroup.hidden) {
+    return;
+  }
 
-document.querySelector("#teleprompter-reset").addEventListener("click", () => {
-  teleprompter.reset();
+  const insideSpeedControl = event.target.closest(".teleprompter-speed-control");
+  if (!insideSpeedControl) {
+    setSpeedMenuOpen(false);
+  }
 });
-
-document.querySelector(".teleprompter-toggle")?.classList.toggle(
-  "is-active",
-  document.querySelector("#highlight-toggle")?.checked === true
-);
 
 if (!hydrateDraft()) {
   resetForm();
 }
+
+syncTeleprompterControls();

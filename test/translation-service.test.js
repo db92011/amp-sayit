@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { requestTranslation } from "../site/src/translation-service.js";
+import { requestTranslation } from "../pages/src/translation-service.js";
 
 const samplePayload = {
   recipient: "My manager",

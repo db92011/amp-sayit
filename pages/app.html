@@ -1,39 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>SayIt! | Communication Translator</title>
-    <meta
-      name="description"
-      content="Translate the message in your head into something the other person can actually hear."
-    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>SayIt!</title>
     <meta name="theme-color" content="#20a8ff" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="SayIt!" />
-    <link rel="apple-touch-icon" href="./assets/sayit-app-icon.png" />
-    <link rel="manifest" href="./site.webmanifest" />
+
     <script>
       (function () {
-        var previewMode = new URLSearchParams(window.location.search).get("preview") || "";
-        previewMode = previewMode.trim();
+        var url = new URL(window.location.href);
+        var isLocalHost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+
+        var isStandalone = false;
+        try {
+          isStandalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            window.navigator.standalone === true ||
+            document.referrer.indexOf("android-app://") === 0;
+        } catch (error) {}
+
+        var previewParam = String(url.searchParams.get("preview") || "").trim();
+        if (previewParam) {
+          try {
+            sessionStorage.setItem("sayit_app_preview_allowed", "1");
+          } catch (error) {}
+        } else {
+          try {
+            sessionStorage.removeItem("sayit_app_preview");
+          } catch (error) {}
+        }
+
+        var previewAllowed = false;
+        try {
+          previewAllowed = sessionStorage.getItem("sayit_app_preview_allowed") === "1";
+        } catch (error) {}
+
+        var previewMode = previewParam;
+
+        var pwaLaunch = url.searchParams.get("source") === "pwa";
+        var allowApp = isLocalHost || isStandalone || pwaLaunch || previewAllowed;
+
+        if (!allowApp) {
+          window.location.replace("/#install");
+          return;
+        }
+
         window.__SAYIT_PREVIEW_MODE__ = previewMode;
-        if (!previewMode) return;
-        document.documentElement.dataset.previewMode = previewMode;
-        if (previewMode === "app-mobile") {
-          document.documentElement.classList.add("preview-app-mobile");
+        if (previewMode) {
+          document.documentElement.dataset.previewMode = previewMode;
+          if (previewMode === "app-mobile") {
+            document.documentElement.classList.add("preview-app-mobile");
+          }
         }
       })();
     </script>
-    <link rel="stylesheet" href="./styles.css" />
+
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/sayit-app-icon.png" />
+    <link rel="stylesheet" href="/app.css" />
   </head>
   <body class="app">
     <div class="page">
       <div class="shell">
         <header class="header">
           <div class="brand">
-            <img class="brand-logo" src="./assets/sayit-app-icon.png" alt="SayIt!" />
+            <img class="brand-logo" src="/assets/sayit-app-icon.png" alt="SayIt!" />
             <div class="brandText">
               <strong>SayIt!</strong>
               <p>Clearer conversations, in your own voice.</p>
@@ -48,10 +81,6 @@
         <main class="main">
           <form id="intake-form" class="intake-form">
             <section class="panel app-section intake-card">
-              <div class="section-heading intake-heading">
-                <h2>Talk to me. I've got your back.</h2>
-              </div>
-
               <label class="field field-short">
                 <span>Who are you talking to?</span>
                 <input
@@ -96,7 +125,16 @@
                 </label>
               </div>
 
-              <input id="message" name="message" type="hidden" />
+              <label class="field field-large">
+                <span>What do you want to say?</span>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows="7"
+                  placeholder="Type it exactly how it came out in your head. Messy is fine."
+                ></textarea>
+                <span class="field-hint">Type it, paste it, or use Record and we'll write into this box.</span>
+              </label>
 
               <label class="field">
                 <span>How do I want this message to come across?</span>
@@ -114,55 +152,66 @@
               </label>
 
               <label class="field field-large">
-                <span>Add context to this</span>
+                <span>Extra context (optional)</span>
                 <textarea
                   id="situation"
                   name="situation"
-                  rows="5"
-                  placeholder="What is this conversation about? Give me the main context."
+                  rows="4"
+                  placeholder="Is there anything you left out before you hit generate? You can add it here."
                 ></textarea>
               </label>
 
               <p id="voice-preview" class="voice-preview"></p>
               <p id="voice-status" class="voice-status">
-                When you're ready, just say it, even if you're mad. Get your message across, and we'll clean it up for you.
+                Type it or tap Record. SayIt will clean it up for you.
               </p>
 
               <div class="voice-actions">
                 <button
                   type="button"
                   id="voice-start"
-                  class="secondary-button compact-button"
+                  class="ghost-button compact-button"
                 >
                   Record
                 </button>
-                <button type="submit" id="translate-action" class="secondary-button compact-button">
+                <button type="submit" id="translate-action" class="primary-button compact-button">
                   Generate
                 </button>
               </div>
 
-              <div class="delivery-copy">
-                <button
-                  type="button"
-                  id="open-teleprompter"
-                  class="ghost-button compact-button"
-                  hidden
-                >
-                  Open teleprompter
-                </button>
-                <p id="teleprompter-summary" class="teleprompter-summary">
-                  Once you push Generate, teleprompter will pop up. You can read from it directly by saying, "I want to read from some notes," or "This was important, so I wrote some notes." Or you can copy and paste it into a message or email.
-                </p>
-              </div>
+              <p id="teleprompter-summary" class="teleprompter-summary">
+                Copy or use teleprompter once your message is ready.
+              </p>
             </section>
           </form>
+
+          <section class="panel resultWrap">
+            <div class="resultTop">
+              <label for="result">Result</label>
+              <div class="badgeCount">
+                <span id="charCount">0</span> chars
+              </div>
+            </div>
+
+            <textarea id="result" readonly placeholder="Your cleaned-up message shows up here..."></textarea>
+
+            <div class="resultActions">
+              <button type="button" id="copy-result" class="ghost-button">Copy</button>
+              <button type="button" id="open-teleprompter" class="ghost-button" hidden>Use teleprompter</button>
+            </div>
+          </section>
         </main>
+
+        <footer class="footer">
+          <div>Built for clarity, privacy, and cleaner conversations.</div>
+          <div class="ver">v1</div>
+        </footer>
       </div>
     </div>
 
     <div class="counterBar" aria-live="polite">
-      <span id="counterText">Start SayIt! Pro</span>
-      <a id="plusBtn" class="counterBtn" href="#" rel="noopener noreferrer">SayIt!+</a>
+      <span id="counterText">Register</span>
+      <a id="plusBtn" class="counterBtn" href="#" rel="noopener noreferrer">Register</a>
     </div>
 
     <div id="plusModal" class="modalOverlay" hidden>
@@ -170,7 +219,7 @@
         <div class="modalBanner">
           <div class="modalBannerInner">
             <div class="modalLogo">
-              <img class="modalLogoImg" src="./assets/sayit-app-icon.png" alt="SayIt!" />
+              <img class="modalLogoImg" src="/assets/sayit-app-icon.png" alt="SayIt!" />
             </div>
             <div>
               <div id="plusTitle" class="modalTitle">Start here</div>
@@ -214,7 +263,7 @@
 
         <div class="modalActions">
           <button id="plusCancelBtn" type="button" class="ghost-button">Cancel</button>
-          <button id="plusContinueBtn" type="button" class="primary-button">Continue</button>
+          <button id="plusContinueBtn" type="button" class="primary-button">Register</button>
         </div>
       </div>
     </div>
@@ -232,29 +281,32 @@
           <aside class="teleprompter-sidebar" aria-label="Teleprompter controls">
             <div class="teleprompter-sidebar-group teleprompter-sidebar-group-top">
               <button id="copy-message" type="button" class="teleprompter-rail-button">Copy</button>
+              <button id="teleprompter-playback" type="button" class="teleprompter-rail-button">Pause</button>
             </div>
 
             <div class="teleprompter-sidebar-group teleprompter-sidebar-group-middle">
-              <button id="teleprompter-start" type="button" class="teleprompter-rail-button">Start</button>
-              <button id="teleprompter-pause" type="button" class="teleprompter-rail-button">Pause</button>
-              <button id="teleprompter-reset" type="button" class="teleprompter-rail-button">Reset</button>
-            </div>
-
-            <div class="teleprompter-sidebar-group teleprompter-sidebar-group-bottom">
-              <label class="teleprompter-rail-button teleprompter-toggle" for="highlight-toggle">
-                <input id="highlight-toggle" type="checkbox" checked />
-                <span>Highlight</span>
-              </label>
-              <div class="teleprompter-speed-list" id="speed-group">
-                <button type="button" data-speed="slow" class="teleprompter-rail-button speed-button is-active">
-                  Slow
+              <div class="teleprompter-speed-control">
+                <button
+                  id="teleprompter-speed-toggle"
+                  type="button"
+                  class="teleprompter-rail-button teleprompter-speed-toggle"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  aria-controls="speed-group"
+                >
+                  Speed: Slow
                 </button>
-                <button type="button" data-speed="medium" class="teleprompter-rail-button speed-button">
-                  Medium
-                </button>
-                <button type="button" data-speed="fast" class="teleprompter-rail-button speed-button">
-                  Fast
-                </button>
+                <div class="teleprompter-speed-popover" id="speed-group" hidden>
+                  <button type="button" data-speed="slow" class="teleprompter-rail-button speed-button is-active">
+                    Slow
+                  </button>
+                  <button type="button" data-speed="medium" class="teleprompter-rail-button speed-button">
+                    Medium
+                  </button>
+                  <button type="button" data-speed="fast" class="teleprompter-rail-button speed-button">
+                    Fast
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -277,6 +329,6 @@
       </section>
     </div>
 
-    <script type="module" src="./src/main.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>

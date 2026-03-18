@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildTranslation, detectIntent } from "../site/src/rewrite-engine.js";
+import { buildTranslation, detectIntent } from "../pages/src/rewrite-engine.js";
 import { onRequestGet, onRequestPost } from "../functions/api/translate.js";
 
 test("detectIntent prioritizes boundary language", () => {
@@ -52,6 +52,41 @@ test("buildTranslation treats after-state as delivery style instead of outcome t
 
   assert.doesNotMatch(translation.primary, /What I want from this conversation is simple: funny\./i);
   assert.match(translation.primary, /feel funny instead of reactive/i);
+});
+
+test("buildTranslation rewrites heated cleanup drafts instead of echoing them back", () => {
+  const translation = buildTranslation({
+    relationship: "Spouse or partner",
+    situation: "",
+    message:
+      "Hi hi honey I just wanna say that I've been doing the dishes for years and it really getting annoying that I have to do what I'm doing now and then get down there and finish up the mess that you've created and I don't want to do this anymore if you can just give me a little hand that would be really helpful.",
+    intent: "auto",
+    outcome: "",
+    afterState: "Kind"
+  });
+
+  assert.match(translation.primary, /cleanup has been landing on me|share the dishes and cleanup/i);
+  assert.doesNotMatch(translation.primary, /mess that you've created|hi hi honey|doing the dishes for years/i);
+  assert.ok(translation.teleprompterLines.every((line) => !/mess that you've created/i.test(line)));
+});
+
+test("buildTranslation keeps concrete cleanup details from a typed draft", () => {
+  const translation = buildTranslation({
+    relationship: "Spouse or partner",
+    message:
+      "I have been having issues with doing the dishes this whole time and I wish that you would help me out I've been working hard and the dishes are piling up in the sink dirty every time you cook you leave a mess I would like to have you work with me on this",
+    situation: "",
+    intent: "auto",
+    outcome: "",
+    afterState: "Easy to understand"
+  });
+
+  assert.match(translation.primary, /dishes|cleanup|sink|cook/i);
+  assert.match(
+    translation.primary,
+    /help me out|work with me|share the dishes and kitchen cleanup|share the dishes and cleanup|help with the dishes and kitchen cleanup/i
+  );
+  assert.doesNotMatch(translation.primary, /I need some support, and I want to ask for it clearly\./i);
 });
 
 test("translation API returns server metadata and translation payload", async () => {

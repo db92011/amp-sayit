@@ -1,10 +1,11 @@
-import { buildTranslation } from "../../site/src/rewrite-engine.js";
+import { buildTranslation } from "../../pages/src/rewrite-engine.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
 const DEFAULT_OPENAI_BEHAVIOR = [
   "You rewrite emotionally charged or messy drafts into calm, clear, human communication.",
   "Preserve the user's core meaning, lower unnecessary heat, and keep the wording natural.",
+  "Do not genericize away the user's concrete facts, examples, or requests. Keep specifics like dishes, cleanup, timing, texts, money, cooking, or repeated behaviors unless they are needlessly inflammatory.",
   "Adapt the wording to the selected relationship dynamic, such as spouse, child, friend, coworker, boss, employee, customer, client, stranger, or online conversation.",
   "Respect the user's selected desired outcome so the message lands as calm, respectful, clear, confident, short, funny, or easy to understand when requested.",
   "A message to a spouse should not sound like a message to a boss, and a message to a child should not sound like a message to a customer.",
@@ -193,6 +194,7 @@ function buildOpenAiPrompt(payload) {
     "- Keep the user's meaning intact.",
     "- Make it calmer, clearer, and more effective.",
     "- Use simple, natural language.",
+    "- Preserve the user's concrete facts and examples unless removing one is necessary to reduce unnecessary heat.",
     "- Match the selected categories closely, especially relationship, intent, outcome, and after-state.",
     "- detectedIntent.id must be one of: explain, boundary, criticism, correction, frustration, help, clarify.",
     "- summary must contain exactly 3 cards.",

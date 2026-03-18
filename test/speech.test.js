@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createSpeechController } from "../site/src/speech.js";
+import { createSpeechController } from "../pages/src/speech.js";
 
 test("speech controller disables controls when recognition is unavailable", () => {
   const originalWindow = globalThis.window;

@@ -1,24 +1,18 @@
 # SayIt!
 
-SayIt! is a first-build communication translator that turns a messy draft into a calmer, clearer message and gives the user a teleprompter mode to deliver it out loud.
+SayIt! is the standalone SayIt app. It now follows Finch's flat Cloudflare Pages app shape:
 
-## What is built
+- `pages/index.html`: public install and marketing surface
+- `pages/app.html`: gated standalone app shell
+- `pages/app.js`: app entry module
+- `pages/src/`: SayIt runtime modules
+- `functions/api/`: same-origin API routes for translation, billing, plan checks, and device management
 
-- Full intake flow for audience, relationship, situation, outcome, barrier, tone, before state, after state, and proof of success
-- Browser voice capture using `SpeechRecognition` / `webkitSpeechRecognition` when available
-- Native-first voice capture support when the app is wrapped with Capacitor and the speech plugin is installed
-- Translation output with a primary rewrite, short version, conversation map, tone translation map, delivery notes, and a full-screen teleprompter overlay
-- Local draft persistence with `localStorage`
-- A Cloudflare Pages Function at `/api/translate` that creates a real backend boundary for future OpenAI integration
-- Optional OpenAI-backed translation through the Pages Function when `OPENAI_API_KEY` is configured
-- Static-first fallback behavior so the app still works when the API route is unavailable during simple local development
-- Node tests covering the rewrite engine and the API handler
+## Product boundaries
 
-## Project shape
-
-- [`site/`](/Users/dannybrooking/Documents/GitHub%20=%20master%20copy/projects/SayIt/site): static frontend shipped to Cloudflare Pages
-- [`functions/api/translate.js`](/Users/dannybrooking/Documents/GitHub%20=%20master%20copy/projects/SayIt/functions/api/translate.js): Pages Function translation endpoint
-- [`site/src/rewrite-engine.js`](/Users/dannybrooking/Documents/GitHub%20=%20master%20copy/projects/SayIt/site/src/rewrite-engine.js): rule-based translation engine used by both frontend fallback and server endpoint
+- Canonical public domain: `https://sayit.dev`
+- SayIt branding, copy, API routes, billing flow, and runtime live in this repo
+- `CircleThePeopleSite` should stay marketing and redirect only for SayIt
 
 ## Commands
 
@@ -28,75 +22,15 @@ npm run dev:static
 npm test
 ```
 
-`npm run dev` runs Cloudflare Pages locally at `http://127.0.0.1:4173`, including the `/api/translate` function.
+`npm run dev` serves the app through Cloudflare Pages at `http://127.0.0.1:4173`.
 
-`npm run dev:static` serves only the static site at `http://127.0.0.1:4173`. Use this only for layout work, because OpenAI translation will not run there.
+`npm run dev:static` serves only the `pages/` output for layout work.
 
-## Cloudflare Pages
+## Notes
 
-`SayIt` is now intended to deploy as its own standalone Cloudflare Pages app on the existing Pages project `sayit`.
-
-Default standalone URL:
-
-`https://amp-sayit.pages.dev`
-
-GitHub auto-deploy is handled by:
-
-- [deploy-pages.yml](/Users/dannybrooking/Documents/GitHub%20=%20master%20copy/projects/SayIt/.github/workflows/deploy-pages.yml)
-
-Add these GitHub repository secrets in the `amp-sayit` repo:
-
-- `CLOUDFLARE_API_TOKEN`
-- `CLOUDFLARE_ACCOUNT_ID`
-
-Then set the runtime secret on the Cloudflare Pages project `sayit`:
-
-- `OPENAI_API_KEY`
-
-`OpenAi_SayIt_Secret_Key` is still supported by the server code, but `OPENAI_API_KEY` is the clearest default going forward.
-
-To turn SayIt into an iPhone app with native microphone permissions instead of Safari-managed permissions:
-
-```bash
-npm install
-npm run cap:add:ios
-npm run cap:sync
-npm run cap:open:ios
-```
-
-Inside Xcode, add these usage descriptions to `ios/App/App/Info.plist` before running on a device:
-
-- `NSMicrophoneUsageDescription`: `SayIt uses your microphone so you can speak your draft out loud.`
-- `NSSpeechRecognitionUsageDescription`: `SayIt uses speech recognition to turn your spoken draft into text.`
-
-Once the native shell is in place, the Record button will prefer the Capacitor speech plugin and only fall back to browser speech recognition on the web.
-
-For the mobile app-style review inside VS Code Simple Browser, use:
-
-`http://127.0.0.1:4173/?preview=app-mobile`
-
-If `.dev.vars` is missing or `OPENAI_API_KEY` is not set, SayIt will fall back to the local rewrite engine. The app now surfaces that fallback state in the UI so it is obvious when OpenAI is not active.
-
-## Environment
-
-Copy `.dev.vars.example` to `.dev.vars` for local Pages-style development or set the same values in Cloudflare Pages:
-
-- `OPENAI_API_KEY`
-- `OpenAi_SayIt_Secret_Key` also works if that is the secret name already stored in Cloudflare
-- `OPENAI_MODEL` default: `gpt-5-mini`
-- `OPENAI_BEHAVIOR` optional system behavior override
-
-## Current assumptions
-
-- The app stays usable without OpenAI because the existing rule-based translator remains as the fallback path.
-- The frontend calls `/api/translate` first and falls back to the local engine if the API route is not present.
-- Voice capture now prefers a native Capacitor bridge when available and falls back to browser speech recognition on the web.
-- The SayIt! Pro in-app modal now expects Circle the People API endpoints plus a `SAYIT_DB` D1 binding on the Circle site for two-device seat tracking.
-- Billing, subscription enforcement, email validation, and persistent accounts are not implemented in this build.
-
-## Recommended next steps
-
-1. Add identity, subscription state, and smart-link email flows before gating premium usage inside the app itself.
-2. Persist drafts, saved rewrites, and teleprompter sessions in D1.
-3. Wire the production app hostname into the Circle the People marketing flow.
-4. Run a browser pass in Cloudflare Pages dev before publish.
+- The install surface is `/`.
+- The app shell is `/app.html`.
+- The PWA manifest launches into `/app.html?source=pwa`.
+- Frontend API calls stay same-origin by default.
+- Cloudflare Pages config is intentionally flat: one `wrangler.toml`, one `pages/` output directory, one `functions/` runtime.
+- If `OPENAI_API_KEY` is missing, SayIt falls back to the local rewrite engine in [`pages/src/rewrite-engine.js`](/Users/dannybrooking/Documents/GitHub = master copy/projects/SayIt/pages/src/rewrite-engine.js).

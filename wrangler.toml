@@ -1,6 +1,14 @@
 name = "sayit"
-pages_build_output_dir = "./site"
-compatibility_date = "2026-03-14"
+pages_build_output_dir = "pages"
+compatibility_date = "2026-03-05"
 
 [vars]
 APP_NAME = "SayIt!"
+SAYIT_APP_URL = "https://sayit.dev"
+SAYIT_MARKETING_URL = "https://sayit.dev"
+SAYIT_STRIPE_PRICE_ID = "price_1TBeOeEctNypi6zMCYMzU2cB"
+
+[[d1_databases]]
+binding = "SAYIT_DB"
+database_name = "sayit_main"
+database_id = "2607270d-2a45-4f1f-a010-0a81dfd6a6ff"

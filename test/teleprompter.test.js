@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { TeleprompterController } from "../site/src/teleprompter.js";
+import { TeleprompterController } from "../pages/src/teleprompter.js";
 
 function makeClassList() {
   const values = new Set();

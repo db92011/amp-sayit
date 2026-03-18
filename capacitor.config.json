@@ -1,7 +1,7 @@
 {
   "appId": "com.circlethepeople.sayit",
   "appName": "SayIt",
-  "webDir": "site",
+  "webDir": "pages",
   "bundledWebRuntime": false,
   "server": {
     "iosScheme": "https"

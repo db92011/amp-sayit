@@ -1,14 +1,15 @@
 const SPEED_MAP = {
-  slow: 24,
-  medium: 42,
-  fast: 64
+  slow: 34,
+  medium: 54,
+  fast: 78
 };
 
 export class TeleprompterController {
-  constructor({ container, script, highlightToggle }) {
+  constructor({ container, script, highlightToggle, onStateChange = null }) {
     this.container = container;
     this.script = script;
     this.highlightToggle = highlightToggle;
+    this.onStateChange = onStateChange;
     this.lines = [];
     this.speed = "slow";
     this.animationFrame = null;
@@ -24,6 +25,7 @@ export class TeleprompterController {
     if (!lines || lines.length === 0) {
       this.script.innerHTML =
         '<p class="teleprompter-placeholder">Generate a translated message to load teleprompter mode.</p>';
+      this.notifyStateChange();
       return;
     }
 
@@ -43,6 +45,7 @@ export class TeleprompterController {
   setSpeed(speed) {
     if (SPEED_MAP[speed]) {
       this.speed = speed;
+      this.notifyStateChange();
     }
   }
 
@@ -54,6 +57,10 @@ export class TeleprompterController {
     return this.hasLines() && this.getMaxScrollTop() > 2;
   }
 
+  isRunning() {
+    return this.running;
+  }
+
   start() {
     if (!this.hasLines()) {
       return false;
@@ -62,6 +69,7 @@ export class TeleprompterController {
     const maxScrollTop = this.getMaxScrollTop();
     if (maxScrollTop <= 2) {
       this.updateHighlight();
+      this.notifyStateChange();
       return false;
     }
 
@@ -77,6 +85,7 @@ export class TeleprompterController {
     this.lastTimestamp = 0;
     this.updateHighlight();
     this.animationFrame = window.requestAnimationFrame(this.tick);
+    this.notifyStateChange();
     return true;
   }
 
@@ -88,6 +97,7 @@ export class TeleprompterController {
     this.stop();
     this.script.scrollTop = 0;
     this.updateHighlight();
+    this.notifyStateChange();
   }
 
   stop() {
@@ -96,6 +106,7 @@ export class TeleprompterController {
       window.cancelAnimationFrame(this.animationFrame);
       this.animationFrame = null;
     }
+    this.notifyStateChange();
   }
 
   tick = (timestamp) => {
@@ -125,7 +136,7 @@ export class TeleprompterController {
   };
 
   updateHighlight() {
-    if (!this.highlightToggle.checked) {
+    if (this.highlightToggle && !this.highlightToggle.checked) {
       this.lines.forEach((line) => {
         line.classList.remove("is-active", "is-near", "is-far");
       });
@@ -158,5 +169,11 @@ export class TeleprompterController {
 
   getMaxScrollTop() {
     return Math.max(0, this.script.scrollHeight - this.script.clientHeight);
+  }
+
+  notifyStateChange() {
+    if (typeof this.onStateChange === "function") {
+      this.onStateChange();
+    }
   }
 }
