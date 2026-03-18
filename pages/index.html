@@ -2,21 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>SayIt! | Clearer conversations</title>
     <meta
       name="description"
       content="SayIt! helps you say the hard thing clearly, calmly, and in your own voice."
     />
-    <meta name="theme-color" content="#20a8ff" />
+    <meta name="theme-color" content="#0b0f14" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="SayIt!" />
     <link rel="manifest" href="/site.webmanifest" />
-    <link rel="apple-touch-icon" href="/assets/sayit-app-icon.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/assets/sayit-app-icon.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/assets/sayit-app-icon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/sayit-app-icon.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
     <meta property="og:title" content="SayIt! | Clearer conversations" />
     <meta
       property="og:description"
@@ -40,6 +37,12 @@
           window.location.replace("/app");
         }
       })();
+    </script>
+    <script>
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+      console.log("Standalone mode:", isStandalone);
     </script>
     <script>
       if ("serviceWorker" in navigator) {
