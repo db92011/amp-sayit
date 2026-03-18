@@ -49,7 +49,6 @@ const teleprompterSpeedGroup = document.querySelector("#speed-group");
 const resultField = document.querySelector("#result");
 const charCount = document.querySelector("#charCount");
 const submitButton = document.querySelector("#translate-action");
-const plusButton = document.querySelector("#plusBtn");
 const plusModal = document.querySelector("#plusModal");
 const plusModalCard = document.querySelector("#plusModal .modalCard");
 const plusEmailInput = document.querySelector("#plusEmail");
@@ -148,12 +147,11 @@ function setSayItProActive(email = "") {
 }
 
 function refreshPlusUi() {
-  if (!counterText || !plusButton) {
+  if (!counterText) {
     return;
   }
 
-  counterText.textContent = isSayItProActive() ? "Pro active" : "Register";
-  plusButton.textContent = "Register";
+  counterText.textContent = isSayItProActive() ? "SayIt! Pro subscribed" : "Better yet, SayIt! Pro";
 }
 
 function showPlusModal() {
@@ -643,15 +641,8 @@ function updateOutputs(translation, meta = {}) {
     setTeleprompterSummary();
     setVoiceStatus("OpenAI rewrite is active. You can adjust your message and generate again any time.");
   } else if (meta.source === "local" || meta.mode === "rule-based") {
-    const fallbackReason = String(meta.fallbackReason || meta.reason || "").trim();
-    setTeleprompterSummary(
-      fallbackReason
-        ? `OpenAI is not active here yet, so you're seeing the local fallback rewrite. Reason: ${fallbackReason}`
-        : "OpenAI is not active here yet, so you're seeing the local fallback rewrite."
-    );
-    setVoiceStatus(
-      "OpenAI is not configured in this local preview yet. Add your key to .dev.vars and run npm run dev to use the real rewrite."
-    );
+    setTeleprompterSummary("Local preview is using the built-in fallback rewrite.");
+    setVoiceStatus("Add your OpenAI key in .dev.vars to preview the live AI rewrite.");
   } else {
     setTeleprompterSummary();
   }
@@ -770,10 +761,6 @@ document.querySelector("#reset-form").addEventListener("click", resetForm);
 closeTeleprompterButton.addEventListener("click", closeTeleprompter);
 openTeleprompterButton?.addEventListener("click", () => {
   openTeleprompter({ autoStart: false });
-});
-plusButton?.addEventListener("click", (event) => {
-  event.preventDefault();
-  showPlusModal();
 });
 plusCancelButton?.addEventListener("click", () => {
   hidePlusModal();
