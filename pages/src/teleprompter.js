@@ -11,6 +11,7 @@ export class TeleprompterController {
     this.highlightToggle = highlightToggle;
     this.onStateChange = onStateChange;
     this.lines = [];
+    this.endSpacer = null;
     this.speed = "slow";
     this.animationFrame = null;
     this.running = false;
@@ -25,6 +26,7 @@ export class TeleprompterController {
     if (!lines || lines.length === 0) {
       this.script.innerHTML =
         '<p class="teleprompter-placeholder">Generate a translated message to load teleprompter mode.</p>';
+      this.endSpacer = null;
       this.notifyStateChange();
       return;
     }
@@ -39,6 +41,10 @@ export class TeleprompterController {
     }
 
     this.script.appendChild(fragment);
+    const spacer = document.createElement("div");
+    spacer.className = "teleprompter-end-spacer";
+    this.script.appendChild(spacer);
+    this.endSpacer = spacer;
     this.reset();
   }
 
@@ -54,7 +60,7 @@ export class TeleprompterController {
   }
 
   canScroll() {
-    return this.hasLines() && this.getMaxScrollTop() > 2;
+    return this.hasLines();
   }
 
   isRunning() {
@@ -67,11 +73,6 @@ export class TeleprompterController {
     }
 
     const maxScrollTop = this.getMaxScrollTop();
-    if (maxScrollTop <= 2) {
-      this.updateHighlight();
-      this.notifyStateChange();
-      return false;
-    }
 
     if (this.script.scrollTop >= maxScrollTop - 2) {
       this.reset();

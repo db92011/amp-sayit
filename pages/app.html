@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <title>SayIt!</title>
     <meta name="theme-color" content="#20a8ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     <script>
       (function () {
@@ -129,17 +131,6 @@
                 </label>
               </div>
 
-              <label class="field field-large">
-                <span>What do you want to say?</span>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="7"
-                  placeholder="Type it exactly how it came out in your head. Messy is fine."
-                ></textarea>
-                <span class="field-hint">Type it, paste it, or use Record and we'll write into this box.</span>
-              </label>
-
               <label class="field">
                 <span>How do I want this message to come across?</span>
                 <select id="after-state" name="afterState">
@@ -165,9 +156,20 @@
                 ></textarea>
               </label>
 
+              <label class="field field-large">
+                <span>What do you want to say?</span>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows="7"
+                  placeholder="Type it exactly how it came out in your head. Messy is fine."
+                ></textarea>
+                <span class="field-hint">Type it, paste it, or use Record and we'll write into this box.</span>
+              </label>
+
               <p id="voice-preview" class="voice-preview"></p>
               <p id="voice-status" class="voice-status">
-                Type it or tap Record. SayIt will clean it up for you.
+                Type it, or tap Record if you want to talk it out first.
               </p>
 
               <div class="voice-actions">
@@ -201,7 +203,7 @@
 
             <div class="resultActions">
               <button type="button" id="copy-result" class="ghost-button">Copy</button>
-              <button type="button" id="open-teleprompter" class="ghost-button" hidden>Use teleprompter</button>
+              <button type="button" id="open-teleprompter" class="ghost-button" hidden>Teleprompter</button>
             </div>
           </section>
         </main>

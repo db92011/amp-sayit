@@ -920,6 +920,11 @@ body.teleprompter-open {
   max-width: 15ch;
 }
 
+.teleprompter-end-spacer {
+  height: 58vh;
+  min-height: 260px;
+}
+
 .teleprompter-line,
 .teleprompter-placeholder {
   margin: 0 0 1.6rem;
@@ -1105,6 +1110,11 @@ body.teleprompter-open {
 
   .teleprompter-script > * {
     max-width: 17ch;
+  }
+
+  .teleprompter-end-spacer {
+    height: 42vh;
+    min-height: 180px;
   }
 
   .teleprompter-highlight-guide {

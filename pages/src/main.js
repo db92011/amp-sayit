@@ -472,10 +472,11 @@ function syncPlusStateFromUrl() {
   }
 }
 
-function updateVoicePreview(text = "") {
+function updateVoicePreview(text = "", { fromVoice = false } = {}) {
   const nextText = String(text || "").trim();
-  voicePreview.textContent = nextText ? "Voice draft captured. You can edit it in the message box below." : "";
-  voicePreview.classList.toggle("has-content", Boolean(nextText));
+  const showPreview = fromVoice && Boolean(nextText);
+  voicePreview.textContent = showPreview ? "Voice draft captured. You can edit it in the message box below." : "";
+  voicePreview.classList.toggle("has-content", showPreview);
 }
 
 function setTeleprompterSummary(text = "") {
@@ -562,9 +563,7 @@ function syncTeleprompterReadiness() {
   const ready = Boolean(latestMessageText);
   openTeleprompterButton.hidden = !ready;
   openTeleprompterButton.disabled = !ready;
-  openTeleprompterButton.textContent = teleprompter.canScroll()
-    ? "Use teleprompter"
-    : "Read message";
+  openTeleprompterButton.textContent = "Teleprompter";
   syncTeleprompterControls();
 }
 
@@ -641,8 +640,13 @@ function updateOutputs(translation, meta = {}) {
     setTeleprompterSummary();
     setVoiceStatus("OpenAI rewrite is active. You can adjust your message and generate again any time.");
   } else if (meta.source === "local" || meta.mode === "rule-based") {
-    setTeleprompterSummary("Local preview is using the built-in fallback rewrite.");
-    setVoiceStatus("Add your OpenAI key in .dev.vars to preview the live AI rewrite.");
+    if (isLocalPreviewHost()) {
+      setTeleprompterSummary("Local preview is using the built-in fallback rewrite.");
+      setVoiceStatus("Add your OpenAI key in .dev.vars to preview the live AI rewrite.");
+    } else {
+      setTeleprompterSummary("Live rewrite is temporarily unavailable, so SayIt used the built-in fallback.");
+      setVoiceStatus("You can still edit your draft and generate again any time.");
+    }
   } else {
     setTeleprompterSummary();
   }
@@ -705,7 +709,7 @@ function hydrateDraft() {
       }
     }
 
-    updateVoicePreview(draft.message || "");
+    updateVoicePreview("");
     return true;
   } catch {
     return false;
@@ -814,7 +818,7 @@ const speechController = createSpeechController({
   startButton: document.querySelector("#voice-start"),
   stopButton: null,
   onTranscript(nextValue) {
-    updateVoicePreview(nextValue);
+    updateVoicePreview(nextValue, { fromVoice: true });
     persistDraft();
   }
 });
@@ -854,11 +858,7 @@ teleprompterPlaybackButton?.addEventListener("click", () => {
   }
 
   if (!teleprompter.start()) {
-    setTeleprompterSummary(
-      teleprompter.hasLines()
-        ? "This message is short enough to read without scrolling. Use Copy if that is easier."
-        : "Generate a message first to load teleprompter mode."
-    );
+    setTeleprompterSummary("Generate a message first to load teleprompter mode.");
     syncTeleprompterControls();
     return;
   }

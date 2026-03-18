@@ -127,7 +127,7 @@ test("teleprompter loads lines and highlights the active line", () => {
     });
 
     controller.setLines(["Line one", "Line two", "Line three"]);
-    assert.equal(script.children.length, 3);
+    assert.equal(script.children.length, 4);
     assert.equal(controller.hasLines(), true);
     assert.equal(controller.canScroll(), true);
 
@@ -145,7 +145,7 @@ test("teleprompter loads lines and highlights the active line", () => {
   }
 });
 
-test("teleprompter start returns false when content is too short to scroll", () => {
+test("teleprompter start still runs for short content", () => {
   const originalDocument = globalThis.document;
   const originalWindow = globalThis.window;
 
@@ -186,8 +186,8 @@ test("teleprompter start returns false when content is too short to scroll", () 
 
     controller.setLines(["Short line"]);
     assert.equal(controller.hasLines(), true);
-    assert.equal(controller.canScroll(), false);
-    assert.equal(controller.start(), false);
+    assert.equal(controller.canScroll(), true);
+    assert.equal(controller.start(), true);
   } finally {
     globalThis.document = originalDocument;
     globalThis.window = originalWindow;
