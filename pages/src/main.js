@@ -82,6 +82,10 @@ let continueBusy = false;
 let removeBusy = false;
 let appLocked = false;
 
+function isLocalPreviewHost() {
+  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+}
+
 function setAppLocked(locked) {
   appLocked = Boolean(locked);
   document.body.classList.toggle("app-locked", appLocked);
@@ -173,6 +177,15 @@ function showPlusModal() {
   window.setTimeout(() => {
     plusEmailInput?.focus();
   }, 30);
+}
+
+function enforceAccessGate() {
+  const unlocked = isSayItProActive();
+  setAppLocked(!unlocked);
+
+  if (!unlocked && !isLocalPreviewHost()) {
+    showPlusModal();
+  }
 }
 
 function hidePlusModal() {
@@ -739,7 +752,7 @@ clearOutputs();
 syncPlusStateFromUrl();
 refreshPlusUi();
 syncPlusFromServer();
-setAppLocked(false);
+enforceAccessGate();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();

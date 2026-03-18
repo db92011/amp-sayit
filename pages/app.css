@@ -111,6 +111,10 @@ button:disabled {
   max-width: 430px;
 }
 
+.browser-hosted .page {
+  padding-top: 26px;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -565,7 +569,7 @@ body.teleprompter-open .counterBar {
   align-items: center;
   justify-content: center;
   padding: 18px;
-  z-index: 100;
+  z-index: 20000;
 }
 
 #plusModal .modalCard {
@@ -958,6 +962,10 @@ body.teleprompter-open {
     width: 100vw;
     padding: 0;
     padding-bottom: calc(12px + var(--counter-h) + var(--safe-bottom));
+  }
+
+  .browser-hosted .page {
+    padding-top: 16px;
   }
 
   .shell {

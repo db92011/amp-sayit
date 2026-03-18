@@ -54,6 +54,10 @@
             document.documentElement.classList.add("preview-app-mobile");
           }
         }
+
+        if (!isStandalone && !previewMode) {
+          document.documentElement.classList.add("browser-hosted");
+        }
       })();
     </script>
 
