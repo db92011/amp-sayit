@@ -17,13 +17,15 @@
           window.location.hostname === "localhost" ||
           window.location.hostname === "127.0.0.1";
 
-        var isStandalone = false;
-        try {
-          isStandalone =
-            window.matchMedia("(display-mode: standalone)").matches ||
-            window.navigator.standalone === true ||
-            document.referrer.indexOf("android-app://") === 0;
-        } catch (error) {}
+        var iosStandalone = window.navigator.standalone === true;
+        var displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
+        var isStandalone = iosStandalone || displayStandalone;
+
+        console.log("iosStandalone:", iosStandalone);
+        console.log("displayStandalone:", displayStandalone);
+        console.log("inStandalone:", isStandalone);
+
+        document.documentElement.setAttribute("data-standalone", isStandalone ? "yes" : "no");
 
         var previewParam = String(url.searchParams.get("preview") || "").trim();
         if (previewParam) {
@@ -58,18 +60,12 @@
           }
         }
 
-        window.__SAYIT_RUNTIME_MODE__ = previewMode ? "preview" : isStandalone ? "standalone" : "browser";
+        window.__SAYIT_PREVIEW_MODE__ = previewMode;
 
         if (!isStandalone && !previewMode) {
           document.documentElement.classList.add("browser-hosted");
         }
       })();
-    </script>
-    <script>
-      const isStandalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true;
-      console.log("Standalone mode:", isStandalone);
     </script>
 
     <link rel="manifest" href="/site.webmanifest" />
@@ -91,7 +87,7 @@
             <div class="brandText">
               <strong>SayIt!</strong>
               <p>Clearer conversations, in your own voice.</p>
-              <p id="runtimeMode" class="runtime-mode" aria-live="polite">Checking launch mode...</p>
+              <p id="runtimeMode" class="runtime-mode" aria-live="polite">Mode: Safari Browser</p>
             </div>
           </div>
 

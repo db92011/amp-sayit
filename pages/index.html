@@ -23,25 +23,20 @@
     <link rel="stylesheet" href="/style.css" />
     <script>
       (function () {
-        var url = new URL(window.location.href);
-        var isStandalone = false;
-        try {
-          isStandalone =
-            window.matchMedia("(display-mode: standalone)").matches ||
-            window.navigator.standalone === true ||
-            document.referrer.indexOf("android-app://") === 0;
-        } catch (error) {}
+        const iosStandalone = window.navigator.standalone === true;
+        const displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
+        const inStandalone = iosStandalone || displayStandalone;
 
-        if (isStandalone) {
+        console.log("iosStandalone:", iosStandalone);
+        console.log("displayStandalone:", displayStandalone);
+        console.log("inStandalone:", inStandalone);
+
+        document.documentElement.setAttribute("data-standalone", inStandalone ? "yes" : "no");
+
+        if (inStandalone) {
           window.location.replace("/app");
         }
       })();
-    </script>
-    <script>
-      const isStandalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true;
-      console.log("Standalone mode:", isStandalone);
     </script>
     <script>
       if ("serviceWorker" in navigator) {

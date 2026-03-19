@@ -84,39 +84,23 @@ let removeBusy = false;
 let appLocked = false;
 
 function detectRuntimeMode() {
-  const initialMode = String(window.__SAYIT_RUNTIME_MODE__ || "").trim();
-  if (initialMode === "standalone" || initialMode === "preview" || initialMode === "browser") {
-    return initialMode;
-  }
-
-  try {
-    if (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true ||
-      document.referrer.indexOf("android-app://") === 0
-    ) {
-      return "standalone";
-    }
-  } catch {}
-
-  return "browser";
+  const iosStandalone = window.navigator.standalone === true;
+  const displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  return iosStandalone || displayStandalone ? "standalone" : "browser";
 }
 
 function refreshRuntimeModeUi() {
   const runtimeMode = detectRuntimeMode();
-  window.__SAYIT_RUNTIME_MODE__ = runtimeMode;
+  document.documentElement.setAttribute("data-standalone", runtimeMode === "standalone" ? "yes" : "no");
 
   if (runtimeModeNode) {
-    runtimeModeNode.classList.remove("is-standalone", "is-browser", "is-preview");
+    runtimeModeNode.classList.remove("is-standalone", "is-browser");
 
     if (runtimeMode === "standalone") {
-      runtimeModeNode.textContent = "Installed app";
+      runtimeModeNode.textContent = "Mode: Standalone App";
       runtimeModeNode.classList.add("is-standalone");
-    } else if (runtimeMode === "preview") {
-      runtimeModeNode.textContent = "Preview mode";
-      runtimeModeNode.classList.add("is-preview");
     } else {
-      runtimeModeNode.textContent = "Safari/browser";
+      runtimeModeNode.textContent = "Mode: Safari Browser";
       runtimeModeNode.classList.add("is-browser");
     }
   }
@@ -125,9 +109,6 @@ function refreshRuntimeModeUi() {
     if (runtimeMode === "browser") {
       launchModeNote.hidden = false;
       launchModeNote.textContent = "This screen is still in Safari. Add SayIt! to your Home Screen, close Safari, then open the new icon to get the app view.";
-    } else if (runtimeMode === "preview") {
-      launchModeNote.hidden = false;
-      launchModeNote.textContent = "Preview mode is only for testing. Install SayIt! and open the Home Screen icon for the real app launch.";
     } else {
       launchModeNote.hidden = true;
       launchModeNote.textContent = "";
