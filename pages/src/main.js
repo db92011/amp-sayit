@@ -84,6 +84,13 @@ let removeBusy = false;
 let appLocked = false;
 
 function detectRuntimeMode() {
+  const isNativeApp =
+    window.Capacitor?.isNativePlatform?.() === true ||
+    /Capacitor/i.test(window.navigator.userAgent || "");
+  if (isNativeApp) {
+    return "native";
+  }
+
   const iosStandalone = window.navigator.standalone === true;
   const displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
   return iosStandalone || displayStandalone ? "standalone" : "browser";
@@ -92,12 +99,16 @@ function detectRuntimeMode() {
 function refreshRuntimeModeUi() {
   const runtimeMode = detectRuntimeMode();
   document.documentElement.setAttribute("data-standalone", runtimeMode === "standalone" ? "yes" : "no");
+  document.documentElement.setAttribute("data-native-app", runtimeMode === "native" ? "yes" : "no");
 
   if (runtimeModeNode) {
     runtimeModeNode.classList.remove("is-standalone", "is-browser");
 
     if (runtimeMode === "standalone") {
       runtimeModeNode.textContent = "Mode: Standalone App";
+      runtimeModeNode.classList.add("is-standalone");
+    } else if (runtimeMode === "native") {
+      runtimeModeNode.textContent = "Mode: Native App";
       runtimeModeNode.classList.add("is-standalone");
     } else {
       runtimeModeNode.textContent = "Mode: Safari Browser";

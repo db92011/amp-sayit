@@ -28,6 +28,20 @@
         });
       }
     </script>
+    <script>
+      (function () {
+        var isNativeApp = false;
+        try {
+          isNativeApp =
+            window.Capacitor?.isNativePlatform?.() === true ||
+            /Capacitor/i.test(window.navigator.userAgent || "");
+        } catch (error) {}
+
+        if (isNativeApp) {
+          window.location.replace("/app");
+        }
+      })();
+    </script>
   </head>
   <body class="sayit-install">
     <a class="skip" href="#main">Skip to content</a>

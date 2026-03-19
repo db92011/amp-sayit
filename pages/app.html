@@ -20,12 +20,20 @@
         var iosStandalone = window.navigator.standalone === true;
         var displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
         var isStandalone = iosStandalone || displayStandalone;
+        var isNativeApp = false;
+        try {
+          isNativeApp =
+            window.Capacitor?.isNativePlatform?.() === true ||
+            /Capacitor/i.test(window.navigator.userAgent || "");
+        } catch (error) {}
 
         console.log("iosStandalone:", iosStandalone);
         console.log("displayStandalone:", displayStandalone);
         console.log("inStandalone:", isStandalone);
+        console.log("isNativeApp:", isNativeApp);
 
         document.documentElement.setAttribute("data-standalone", isStandalone ? "yes" : "no");
+        document.documentElement.setAttribute("data-native-app", isNativeApp ? "yes" : "no");
 
         var previewParam = String(url.searchParams.get("preview") || "").trim();
         var pwaLaunch = url.searchParams.get("source") === "pwa";
@@ -46,7 +54,7 @@
 
         var previewMode = previewParam;
 
-        var allowApp = isLocalHost || isStandalone || pwaLaunch || previewAllowed;
+        var allowApp = isLocalHost || isStandalone || isNativeApp || pwaLaunch || previewAllowed;
 
         if (!allowApp) {
           window.location.replace("/#install");
