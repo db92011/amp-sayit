@@ -22,23 +22,6 @@
     <meta property="og:type" content="website" />
     <link rel="stylesheet" href="/style.css" />
     <script>
-      (function () {
-        const iosStandalone = window.navigator.standalone === true;
-        const displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
-        const inStandalone = iosStandalone || displayStandalone;
-
-        console.log("iosStandalone:", iosStandalone);
-        console.log("displayStandalone:", displayStandalone);
-        console.log("inStandalone:", inStandalone);
-
-        document.documentElement.setAttribute("data-standalone", inStandalone ? "yes" : "no");
-
-        if (inStandalone) {
-          window.location.replace("/app");
-        }
-      })();
-    </script>
-    <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/service-worker.js").catch(() => {});

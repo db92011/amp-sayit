@@ -28,6 +28,7 @@
         document.documentElement.setAttribute("data-standalone", isStandalone ? "yes" : "no");
 
         var previewParam = String(url.searchParams.get("preview") || "").trim();
+        var pwaLaunch = url.searchParams.get("source") === "pwa";
         if (previewParam) {
           try {
             sessionStorage.setItem("sayit_app_preview_allowed", "1");
@@ -45,7 +46,7 @@
 
         var previewMode = previewParam;
 
-        var allowApp = isLocalHost || isStandalone || previewAllowed;
+        var allowApp = isLocalHost || isStandalone || pwaLaunch || previewAllowed;
 
         if (!allowApp) {
           window.location.replace("/#install");
