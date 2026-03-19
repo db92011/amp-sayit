@@ -80,6 +80,7 @@ let latestMessageText = "";
 let continueBusy = false;
 let removeBusy = false;
 let appLocked = false;
+let serviceWorkerRefreshPending = false;
 
 function detectRuntimeMode() {
   const isNativeApp =
@@ -98,6 +99,32 @@ function refreshRuntimeModeUi() {
   const runtimeMode = detectRuntimeMode();
   document.documentElement.setAttribute("data-standalone", runtimeMode === "standalone" ? "yes" : "no");
   document.documentElement.setAttribute("data-native-app", runtimeMode === "native" ? "yes" : "no");
+}
+
+function installServiceWorkerRefreshHandler() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data?.type !== "SAYIT_SW_ACTIVATED") {
+      return;
+    }
+
+    if (serviceWorkerRefreshPending) {
+      return;
+    }
+
+    serviceWorkerRefreshPending = true;
+
+    if (teleprompter.isOpen()) {
+      teleprompter.close();
+    }
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 60);
+  });
 }
 
 function isLocalPreviewHost() {
@@ -757,6 +784,7 @@ clearOutputs();
 syncPlusStateFromUrl();
 refreshPlusUi();
 refreshRuntimeModeUi();
+installServiceWorkerRefreshHandler();
 syncPlusFromServer();
 enforceAccessGate();
 
