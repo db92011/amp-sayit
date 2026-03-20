@@ -11,7 +11,8 @@ function buildFallback(payload, reason) {
       source: "local",
       label: "Local rewrite mode",
       reason: reason || "Fallback triggered.",
-      mode: "rule-based"
+      mode: "rule-based",
+      usedFallback: true
     }
   };
 }
@@ -53,15 +54,50 @@ async function parseJsonSafely(response) {
   }
 }
 
-function normalizeApiResult(body) {
-  const translation =
-    typeof body?.translation === "string"
-      ? body.translation.trim()
-      : "";
+function normalizeTranslationShape(rawTranslation) {
+  if (typeof rawTranslation === "string") {
+    const primary = rawTranslation.trim();
+    if (!primary) {
+      throw new Error("Translation response was missing usable text.");
+    }
 
-  if (!translation) {
-    throw new Error("Translation response was missing usable text.");
+    return {
+      primary,
+      teleprompterLines: primary
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+    };
   }
+
+  if (rawTranslation && typeof rawTranslation === "object") {
+    const primary = String(rawTranslation.primary || rawTranslation.text || "").trim();
+
+    if (!primary) {
+      throw new Error("Translation response was missing usable text.");
+    }
+
+    const teleprompterLines = Array.isArray(rawTranslation.teleprompterLines)
+      ? rawTranslation.teleprompterLines
+          .map((line) => String(line || "").trim())
+          .filter(Boolean)
+      : primary
+          .split(/\n+/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+    return {
+      ...rawTranslation,
+      primary,
+      teleprompterLines
+    };
+  }
+
+  throw new Error("Translation response was missing usable text.");
+}
+
+function normalizeApiResult(body) {
+  const translation = normalizeTranslationShape(body?.translation);
 
   return {
     translation,
@@ -135,11 +171,12 @@ async function fetchTranslation(payload, attempt = 0) {
 }
 
 export async function requestTranslation(rawPayload) {
+  const payload = normalizePayload(rawPayload);
+
   try {
-    const payload = validatePayload(normalizePayload(rawPayload));
+    validatePayload(payload);
     return await fetchTranslation(payload);
   } catch (error) {
-    const payload = normalizePayload(rawPayload);
     const reason = error instanceof Error ? error.message : "Request failed.";
     return buildFallback(payload, reason);
   }
