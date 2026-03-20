@@ -576,18 +576,13 @@ button:disabled {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  gap: 0;
   padding: 10px 18px calc(10px + var(--safe-bottom));
-  background: rgba(244, 250, 255, 0.58);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  backdrop-filter: blur(18px) saturate(1.15);
-  border: 0;
-  border-radius: 0;
-  box-shadow: 0 -8px 28px rgba(31, 55, 84, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  backdrop-filter: blur(22px) saturate(1.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 -6px 24px rgba(31, 55, 84, 0.08);
   z-index: 9999;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: transform;
 }
 
 body.teleprompter-open .counterBar {
