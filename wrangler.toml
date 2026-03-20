@@ -4,7 +4,7 @@ compatibility_date = "2026-03-05"
 
 [vars]
 APP_NAME = "SayIt!"
-SAYIT_APP_URL = "https://amp-sayit.pages.dev"
+SAYIT_APP_URL = "https://sayitapp.pages.dev"
 SAYIT_MARKETING_URL = "https://circlethepeople.com/sayit"
 SAYIT_STRIPE_PRICE_ID = "price_1TBeOeEctNypi6zMCYMzU2cB"
 
