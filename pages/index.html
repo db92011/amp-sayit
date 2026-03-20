@@ -38,8 +38,10 @@
         var inManifestScope = url.pathname.indexOf(manifestScope) === 0;
         var pwaLaunch = url.searchParams.get("source") === "pwa";
         var previewParam = String(url.searchParams.get("preview") || "").trim();
+        var runtimeDiagnosticEnabled = url.searchParams.get("runtimeDiagnostic") === "1";
 
         window.__SAYIT_RUNTIME_DIAGNOSTIC__ = {
+          enabled: runtimeDiagnosticEnabled,
           mode: mode,
           iosStandalone: iosStandalone,
           displayStandalone: displayStandalone,
@@ -117,7 +119,7 @@
     </script>
   </head>
   <body class="app">
-    <aside id="runtimeDiagnostic" class="runtimeDiagnostic" aria-live="polite">
+    <aside id="runtimeDiagnostic" class="runtimeDiagnostic" aria-live="polite" hidden>
       <div class="runtimeDiagnosticTitle">Runtime Diagnostic</div>
       <pre id="runtimeDiagnosticOutput"></pre>
     </aside>
@@ -391,36 +393,44 @@
     <script type="module" src="/app.js"></script>
     <script>
       (function () {
-        var output = document.getElementById("runtimeDiagnosticOutput");
-        if (!output) {
+        var diag = window.__SAYIT_RUNTIME_DIAGNOSTIC__ || {};
+        if (!diag.enabled) {
           return;
         }
 
+        var panel = document.getElementById("runtimeDiagnostic");
+        var output = document.getElementById("runtimeDiagnosticOutput");
+        if (!panel || !output) {
+          return;
+        }
+
+        panel.hidden = false;
+
         function renderDiagnostic() {
-          var diag = window.__SAYIT_RUNTIME_DIAGNOSTIC__ || {};
+          var liveDiag = window.__SAYIT_RUNTIME_DIAGNOSTIC__ || {};
           var currentUrl = new URL(window.location.href);
           var currentRoute = currentUrl.pathname + currentUrl.search;
-          var routeMatchesManifestStart = currentRoute === (diag.manifestStart || "");
+          var routeMatchesManifestStart = currentRoute === (liveDiag.manifestStart || "");
           var rows = [
-            "mode: " + (diag.mode || "unknown"),
-            "launchHref: " + (diag.launchHref || ""),
+            "mode: " + (liveDiag.mode || "unknown"),
+            "launchHref: " + (liveDiag.launchHref || ""),
             "currentHref: " + window.location.href,
-            "launchRoute: " + (diag.actualRoute || ""),
+            "launchRoute: " + (liveDiag.actualRoute || ""),
             "currentRoute: " + currentRoute,
-            "manifestStart: " + (diag.manifestStart || ""),
+            "manifestStart: " + (liveDiag.manifestStart || ""),
             "routeMatchesManifestStart: " + String(routeMatchesManifestStart),
-            "inManifestScope: " + String(diag.inManifestScope),
-            "pwaLaunch: " + String(diag.pwaLaunch),
-            "topLevel: " + String(diag.topLevel),
-            "iosStandalone: " + String(diag.iosStandalone),
-            "displayStandalone: " + String(diag.displayStandalone),
-            "androidStandaloneReferrer: " + String(diag.androidStandaloneReferrer),
-            "nativeApp: " + String(diag.isNativeApp),
-            "hasReferrer: " + String(diag.hasReferrer),
-            "referrer: " + (diag.referrer || "(none)"),
-            "redirectPlanned: " + String(diag.redirectPlanned),
-            "redirectTarget: " + (diag.redirectTarget || "(none)"),
-            "redirectLog: " + JSON.stringify(diag.redirectLog || [])
+            "inManifestScope: " + String(liveDiag.inManifestScope),
+            "pwaLaunch: " + String(liveDiag.pwaLaunch),
+            "topLevel: " + String(liveDiag.topLevel),
+            "iosStandalone: " + String(liveDiag.iosStandalone),
+            "displayStandalone: " + String(liveDiag.displayStandalone),
+            "androidStandaloneReferrer: " + String(liveDiag.androidStandaloneReferrer),
+            "nativeApp: " + String(liveDiag.isNativeApp),
+            "hasReferrer: " + String(liveDiag.hasReferrer),
+            "referrer: " + (liveDiag.referrer || "(none)"),
+            "redirectPlanned: " + String(liveDiag.redirectPlanned),
+            "redirectTarget: " + (liveDiag.redirectTarget || "(none)"),
+            "redirectLog: " + JSON.stringify(liveDiag.redirectLog || [])
           ];
           output.textContent = rows.join("\n");
         }
