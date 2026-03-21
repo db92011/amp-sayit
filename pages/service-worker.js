@@ -3,10 +3,7 @@ const CACHE = "sayit-static-v5";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/app",
   "/app.html",
-  "/index.js",
-  "/style.css",
   "/app.css",
   "/app.js",
   "/site.webmanifest",
@@ -64,19 +61,6 @@ self.addEventListener("fetch", (event) => {
           return fresh;
         } catch {
           const cache = await caches.open(CACHE);
-          if (url.pathname === "/app.html" || url.pathname === "/app") {
-            return (
-              (await cache.match("/app")) ||
-              (await cache.match("/app.html")) ||
-              (await cache.match("/")) ||
-              (await cache.match("/index.html")) ||
-              new Response("Offline", {
-                status: 503,
-                headers: { "Content-Type": "text/plain" }
-              })
-            );
-          }
-
           return (
             (await cache.match("/")) ||
             (await cache.match("/index.html")) ||
