@@ -2,7 +2,17 @@ const INTENT_RULES = [
   {
     id: "boundary",
     label: "Set a boundary",
-    keywords: ["need", "stop", "can't", "cannot", "won't", "boundary", "not okay", "going forward"]
+    keywords: [
+      "stop",
+      "can't keep",
+      "cannot keep",
+      "won't",
+      "boundary",
+      "not okay",
+      "going forward",
+      "from now on",
+      "has to change"
+    ]
   },
   {
     id: "criticism",
@@ -17,7 +27,7 @@ const INTENT_RULES = [
   {
     id: "help",
     label: "Ask for help",
-    keywords: ["help", "support", "need you", "can you", "please", "assist"]
+    keywords: ["help", "support", "need you", "need help", "need more help", "can you", "please", "assist"]
   },
   {
     id: "frustration",
@@ -193,6 +203,10 @@ const TONE_GUIDANCE = {
     label: "Calm",
     action: "Reduce heat, slow the cadence, and strip out escalators."
   },
+  respectful: {
+    label: "Respectful",
+    action: "Stay direct without sounding punishing, sarcastic, or dismissive."
+  },
   friendly: {
     label: "Friendly",
     action: "Signal connection so the other person does not only hear correction."
@@ -225,14 +239,32 @@ const TONE_GUIDANCE = {
 
 const AFTER_STATE_TONES = {
   Clear: ["clear", "calm"],
-  Respectful: ["gentle", "clear", "calm"],
-  Calm: ["calm", "gentle", "clear"],
+  Respectful: ["respectful", "clear", "calm"],
+  Calm: ["calm", "respectful", "clear"],
   Smart: ["clear", "confident", "professional"],
   Short: ["direct", "clear"],
   Confident: ["confident", "direct", "clear"],
   Funny: ["funny", "friendly", "clear"],
   "Easy to understand": ["clear", "calm"]
 };
+
+const META_LEAD_PATTERNS = [
+  /^(?:[A-Z][a-z]+,\s*)?i care about us\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?i want to say this\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?let me say this more clearly\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?what i mean is\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?i am saying this with care\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?i want to explain\b/i,
+  /^(?:[A-Z][a-z]+,\s*)?i hear the concern\b/i
+];
+
+const META_CLAUSE_PATTERNS = [
+  /^(?:[A-Z][a-z]+,\s*)?i care about us,?\s*(?:so|and)?\s*/i,
+  /^(?:[A-Z][a-z]+,\s*)?let me say this more clearly[,:-]?\s*/i,
+  /^(?:[A-Z][a-z]+,\s*)?i want to say this(?:\s+with\s+[^,]+)?[,:-]?\s*/i,
+  /^(?:[A-Z][a-z]+,\s*)?what i mean is(?:\s+this)?[,:-]?\s*/i,
+  /^(?:[A-Z][a-z]+,\s*)?i am saying this with care(?:,\s*not to attack you)?[,:-]?\s*/i
+];
 
 function normalizeWhitespace(text = "") {
   return text.replace(/\s+/g, " ").trim();
@@ -252,11 +284,108 @@ function toSentenceCase(text = "") {
         return "";
       }
 
-      const lower = trimmed.toLowerCase();
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
     })
     .filter(Boolean)
     .join(" ");
+}
+
+function splitSentences(text = "") {
+  return normalizeWhitespace(String(text || ""))
+    .replace(/\s*([,.!?])\s*/g, "$1 ")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function ensureSentence(text = "") {
+  const cleaned = normalizeWhitespace(String(text || ""));
+  if (!cleaned) {
+    return "";
+  }
+
+  const withCapital = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  if (/[.!?]$/.test(withCapital)) {
+    return withCapital;
+  }
+
+  return `${withCapital}.`;
+}
+
+function prependRecipient(text = "", recipient = "") {
+  const sentence = ensureSentence(text);
+  const name = normalizeWhitespace(recipient);
+
+  if (!sentence || !name) {
+    return sentence;
+  }
+
+  const bare = sentence.replace(/[.!?]$/, "");
+  const bareLower = bare.toLowerCase();
+  if (bareLower.startsWith(`${name.toLowerCase()},`)) {
+    return ensureSentence(bare);
+  }
+
+  return ensureSentence(`${name}, ${bare}`);
+}
+
+function uniqueParts(parts = []) {
+  const seen = new Set();
+  return parts.filter((part) => {
+    const cleaned = normalizeWhitespace(part).toLowerCase();
+    if (!cleaned || seen.has(cleaned)) {
+      return false;
+    }
+    seen.add(cleaned);
+    return true;
+  });
+}
+
+function isMetaLeadSentence(sentence = "") {
+  const cleaned = normalizeWhitespace(sentence);
+  return META_LEAD_PATTERNS.some((pattern) => pattern.test(cleaned));
+}
+
+export function isMetaLeadText(text = "") {
+  return isMetaLeadSentence(text);
+}
+
+function stripLeadingMetaClause(sentence = "") {
+  let next = normalizeWhitespace(sentence);
+
+  for (const pattern of META_CLAUSE_PATTERNS) {
+    next = next.replace(pattern, "");
+  }
+
+  return normalizeWhitespace(next);
+}
+
+export function cleanGeneratedDraft(text = "") {
+  const original = normalizeWhitespace(String(text || ""));
+  if (!original) {
+    return "";
+  }
+
+  const sentences = splitSentences(original);
+  const filtered = [...sentences];
+
+  while (filtered.length > 1 && isMetaLeadSentence(filtered[0])) {
+    filtered.shift();
+  }
+
+  if (filtered[0]) {
+    const trimmedLead = stripLeadingMetaClause(filtered[0]);
+    if (/[A-Za-z0-9]/.test(trimmedLead)) {
+      filtered[0] = trimmedLead;
+    } else if (filtered.length > 1) {
+      filtered.shift();
+    } else {
+      filtered[0] = "";
+    }
+  }
+
+  const next = filtered.filter(Boolean).length > 0 ? filtered.filter(Boolean).join(" ") : original;
+  return splitSentences(next).map(ensureSentence).join(" ");
 }
 
 function detectIntensity(message = "") {
@@ -428,26 +557,18 @@ function buildConcernStatement(input, intentId, tones = []) {
 
   if (isCleanupTopic(haystack)) {
     if (tones.includes("funny")) {
-      return "The kitchen has started feeling like the dishes have squatters' rights, and I am worn down by how much of the cleanup keeps landing on me.";
+      return "I need more help with the dishes and kitchen cleanup before the sink starts feeling like full-time employment.";
     }
 
-    if (/(pile|piling|sink|dirty)/i.test(haystack) && /(cook|cooking|every time|leave)/i.test(haystack)) {
-      return "I have been feeling worn down because the dishes and sink cleanup keep piling up, especially when I end up cleaning after we cook.";
+    if (/(every time|cook|cooking|after you cook|after we cook)/i.test(haystack)) {
+      return "I need more help with the dishes and kitchen cleanup, especially after we cook.";
     }
 
-    if (/(year|always|again|alone|myself|anymore|frustrat|annoy|fed up|tired)/i.test(haystack)) {
-      return "I have been feeling worn down because so much of the cleanup has been landing on me.";
+    if (/(dirty|mess|sink|pile|piling|cleanup|kitchen)/i.test(haystack)) {
+      return "The dishes and kitchen cleanup have been landing on me too often.";
     }
 
-    const cleanupClause =
-      findRelevantClause(messageClauses, /(dish|dishes|cleanup|clean up|mess|sink|kitchen)/i) ||
-      findRelevantClause(messageClauses, /(cook|cooking|pile|piling|dirty|leave)/i);
-
-    if (cleanupClause) {
-      return cleanupClause.replace(/^i\b/i, "I").replace(/\s+/g, " ").trim();
-    }
-
-    return "The cleanup has been feeling uneven, and it has been wearing on me.";
+    return "I need more help with the dishes and kitchen cleanup.";
   }
 
   if (/(fight|argu|snap|yell|reactive|heated|tense)/i.test(haystack)) {
@@ -476,6 +597,44 @@ function buildConcernStatement(input, intentId, tones = []) {
   return `What has been hard for me is that ${firstClause.charAt(0).toLowerCase()}${firstClause.slice(1)}`;
 }
 
+function buildImpactStatement(input, intentId, tones = []) {
+  const haystack = `${input.message || ""} ${input.situation || ""}`.toLowerCase();
+
+  if (isCleanupTopic(haystack)) {
+    if (tones.includes("funny")) {
+      return "When it keeps falling to me, I stop feeling like your partner and start feeling like support staff.";
+    }
+
+    if (/(every time|cook|cooking|after you cook|after we cook)/i.test(haystack)) {
+      return "When I end up handling it on my own after we cook, I feel worn down and frustrated.";
+    }
+
+    return "When it keeps falling to me, I feel worn down.";
+  }
+
+  if (intentId === "help") {
+    return "I am at the point where I cannot keep carrying it alone.";
+  }
+
+  if (intentId === "boundary") {
+    return "When it keeps happening this way, it is hard for me to stay open and steady.";
+  }
+
+  if (intentId === "criticism") {
+    return "When it comes in as blame, it is hard for me to respond well.";
+  }
+
+  if (intentId === "correction") {
+    return "When the facts get twisted, the conversation goes sideways fast.";
+  }
+
+  if (intentId === "frustration") {
+    return "I want to address it before the frustration gets any bigger.";
+  }
+
+  return "";
+}
+
 function buildRequestStatement(input, intentId, tones = []) {
   const message = condenseMessage(input.message || "");
   const messageClauses = extractUsefulClauses(input.message || "");
@@ -483,18 +642,22 @@ function buildRequestStatement(input, intentId, tones = []) {
 
   if (isCleanupTopic(haystack)) {
     if (tones.includes("funny")) {
-      return "I need us to split the dishes and kitchen cleanup more evenly so I am not the only one apparently employed by the sink.";
+      return "Can we split the dishes and kitchen cleanup more evenly so I am not the only one apparently employed by the sink?";
     }
 
-    if (/(help|support|work with me|share|pitch in|hand)/i.test(haystack)) {
-      return "I need more help with the dishes and kitchen cleanup instead of handling it by myself.";
+    if (/(wash|rinse|dishwasher|load)/i.test(haystack)) {
+      return "Can you wash or at least rinse what you use after you cook so it is not all waiting for me?";
+    }
+
+    if (/(help|support|work with me|share|pitch in|hand|split|routine|schedule|days)/i.test(haystack)) {
+      return "Can we split the dishes and kitchen cleanup more evenly going forward?";
     }
 
     if (/(every time|cook|cooking|leave|dirty|pile|piling)/i.test(haystack)) {
-      return "I need us to work together on the dishes and kitchen cleanup more consistently instead of leaving it all for later.";
+      return "Can we make a clear plan for the dishes and kitchen cleanup so it does not keep landing on one person?";
     }
 
-    return "I need us to share the dishes and cleanup more consistently.";
+    return "Can we share the dishes and cleanup more consistently?";
   }
 
   if (/(help|support|hand|pitch in|step up)/i.test(haystack) || intentId === "help") {
@@ -706,11 +869,19 @@ function buildRelationshipSupport(relationship = "", tones = [], shortDraft = fa
   return "";
 }
 
-function splitTeleprompterLines(text) {
-  const parts = text
-    .split(/(?<=[.!?])\s+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
+export function splitTeleprompterLines(text) {
+  const parts = splitSentences(cleanGeneratedDraft(text)).flatMap((part) => {
+    if (part.length <= 120) {
+      return [part];
+    }
+
+    const pieces = part
+      .split(/\s+(?:and|but)\s+/i)
+      .map((piece) => ensureSentence(piece))
+      .filter(Boolean);
+
+    return pieces.every((piece) => piece.length >= 28) ? pieces : [part];
+  });
   const deduped = parts.filter((part, index) => {
     return index === 0 || part.toLowerCase() !== parts[index - 1].toLowerCase();
   });
@@ -726,11 +897,9 @@ export function buildTranslation(input) {
   const intentData = INTENT_COPY[intentId] || INTENT_COPY.explain;
   const tones = chooseTones(input.tones, input.relationship, input.afterState);
   const intensity = detectIntensity(message);
-  const toneLead = buildToneLead(tones, input.relationship, input.afterState, input.recipient);
   const concern = buildConcernStatement(input, intentId, tones);
+  const impact = buildImpactStatement(input, intentId, tones);
   const ask = buildRequestStatement(input, intentId, tones);
-  const closer = buildOutcomeCloser(input.outcome, input.afterState);
-  const relationshipSupport = buildRelationshipSupport(input.relationship, tones, isShortDraft(input));
   const proof = buildProof(input.proof, input.outcome, detectedIntent.label);
   const notes = buildNotes({
     barrier: input.barrier,
@@ -740,22 +909,16 @@ export function buildTranslation(input) {
     intensity
   });
   const notesWithRelationship = [...relationshipNotes(input.relationship), ...notes].slice(0, 4);
+  const mainParts = uniqueParts([
+    prependRecipient(concern, input.recipient),
+    impact,
+    ask
+  ]);
 
-  const shouldSkipGenericOpener = isCleanupTopic(haystack) && (intentId === "help" || tones.includes("funny"));
-  const mainParts = [
-    toneLead,
-    relationshipSupport,
-    shouldSkipGenericOpener ? "" : intentData.opener,
-    concern,
-    ask,
-    closer
-  ].filter(Boolean);
-
-  const primary = mainParts.join(" ");
-  const concise = [input.recipient ? `${normalizeWhitespace(input.recipient)},` : "", concern, ask]
-    .filter(Boolean)
-    .slice(0, 3)
-    .join(" ");
+  const primary = cleanGeneratedDraft(mainParts.join(" "));
+  const concise = cleanGeneratedDraft(
+    uniqueParts([prependRecipient(concern, input.recipient), ask]).join(" ")
+  );
   const toneMap = buildToneMap(tones);
   const intentLabel =
     (INTENT_COPY[intentId] ? INTENT_RULES.find((item) => item.id === intentId) : detectedIntent)?.label ||

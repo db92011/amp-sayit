@@ -1,17 +1,22 @@
-import { buildTranslation } from "../../pages/src/rewrite-engine.js";
+import {
+  buildTranslation,
+  cleanGeneratedDraft,
+  isMetaLeadText,
+  splitTeleprompterLines
+} from "../../pages/src/rewrite-engine.js";
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
 const DEFAULT_OPENAI_BEHAVIOR = [
-  "You rewrite emotionally charged or messy drafts into calm, clear, human communication.",
+  "You rewrite emotionally charged or messy drafts into language a real person can actually say or send.",
   "Preserve the user's core meaning, lower unnecessary heat, and keep the wording natural.",
-  "Do not genericize away the user's concrete facts, examples, or requests. Keep specifics like dishes, cleanup, timing, texts, money, cooking, or repeated behaviors unless they are needlessly inflammatory.",
-  "Do not add meta commentary about the user's goal, tone, or desired feeling. Make the message sound respectful, calm, clear, or confident without explicitly explaining that intention at the end.",
-  "Adapt the wording to the selected relationship dynamic, such as spouse, child, friend, coworker, boss, employee, customer, client, stranger, or online conversation.",
-  "Respect the user's selected desired outcome so the message lands as calm, respectful, clear, confident, short, funny, or easy to understand when requested.",
-  "If the user provides a recipient name, use that name naturally near the start of the message unless doing so would sound unnatural.",
-  "If the selected after-state is funny, use light situational humor and warmth instead of earnest therapy language.",
-  "A message to a spouse should not sound like a message to a boss, and a message to a child should not sound like a message to a customer.",
+  "Keep concrete facts, examples, and requests. Do not flatten specifics like dishes, cleanup, timing, texts, money, cooking, or repeated behaviors unless they are needlessly inflammatory.",
+  "Start with the real point. Do not front-load the rewrite with throat-clearing lines like 'I care about us', 'Let me say this more clearly', 'I want to say this respectfully', 'What I mean is', or any other speech about the speech.",
+  "Do not add meta commentary about the user's goal, tone, or desired feeling. Make it sound clear, respectful, and calm without explicitly explaining that intention.",
+  "Adapt the wording to the selected relationship dynamic. A message to a spouse should not sound like a message to a boss, and a message to a child should not sound like a message to a customer.",
+  "If the user provides a recipient name, use that name naturally near the start only when it helps the message land better.",
+  "The final draft should usually be 2 to 4 sentences and should sound ready to say out loud.",
+  "Teleprompter lines must be cut directly from the same final draft, in order, with no extra intro lines.",
   "Never sound robotic, therapy-scripted, or corporate unless the situation clearly calls for it.",
   "Output valid JSON only."
 ].join(" ");
@@ -47,9 +52,7 @@ function buildPromptContext(payload) {
     categories: {
       recipient: normalizeCategoryValue(data.recipient),
       relationship: normalizeCategoryValue(data.relationship),
-      intent: normalizeCategoryValue(data.intent === "auto" ? "" : data.intent, "Auto-detect from message"),
-      outcome: normalizeCategoryValue(data.outcome),
-      afterState: normalizeCategoryValue(data.afterState)
+      desiredTone: normalizeCategoryValue(data.afterState, "Clear")
     },
     userDraft: {
       message: normalizeCategoryValue(data.message),
@@ -135,7 +138,7 @@ function normalizeCardList(list, fallback, keys) {
 
 function mergeOpenAiTranslation(base, candidate) {
   const translation = candidate && typeof candidate === "object" ? candidate : {};
-  const primary = String(translation.primary || "").trim();
+  const primary = cleanGeneratedDraft(String(translation.primary || ""));
   const detectedIntent =
     translation.detectedIntent &&
     typeof translation.detectedIntent === "object" &&
@@ -151,17 +154,25 @@ function mergeOpenAiTranslation(base, candidate) {
     throw new Error("OpenAI translation was missing a primary draft.");
   }
 
+  const fallbackTeleprompterLines = splitTeleprompterLines(primary);
+  const teleprompterLines = Array.isArray(translation.teleprompterLines)
+    ? translation.teleprompterLines
+        .map((line) => cleanGeneratedDraft(String(line || "")))
+        .filter((line) => line && !isMetaLeadText(line))
+        .filter(Boolean)
+    : fallbackTeleprompterLines;
+
   return {
     ...base,
     ...translation,
     detectedIntent,
     intentLabel: String(translation.intentLabel || detectedIntent.label || base.intentLabel || "").trim(),
     primary,
-    concise: String(translation.concise || base.concise || primary).trim(),
+    concise: cleanGeneratedDraft(String(translation.concise || base.concise || primary)),
     proof: String(translation.proof || base.proof || "").trim(),
     notes: normalizeStringList(translation.notes, base.notes),
     tones: normalizeStringList(translation.tones, base.tones),
-    teleprompterLines: normalizeStringList(translation.teleprompterLines, base.teleprompterLines),
+    teleprompterLines: normalizeStringList(teleprompterLines, fallbackTeleprompterLines),
     summary: normalizeCardList(translation.summary, base.summary, ["label", "title", "body"]),
     conversationMap: normalizeCardList(translation.conversationMap, base.conversationMap, [
       "label",
@@ -182,31 +193,23 @@ function buildOpenAiPrompt(payload) {
     "Create a translation payload for SayIt! using this exact JSON shape:",
     "{",
     '  "detectedIntent": { "id": "string", "label": "string" },',
-    '  "intentLabel": "string",',
-    '  "summary": [{ "label": "string", "title": "string", "body": "string" }],',
     '  "primary": "string",',
     '  "concise": "string",',
-    '  "proof": "string",',
-    '  "notes": ["string", "string", "string"],',
     '  "tones": ["string", "string"],',
-    '  "toneMap": [{ "tone": "string", "label": "string", "action": "string" }],',
-    '  "conversationMap": [{ "label": "string", "value": "string", "detail": "string" }],',
     '  "teleprompterLines": ["string", "string"]',
     "}",
     "Requirements:",
     "- Keep the user's meaning intact.",
     "- Make it calmer, clearer, and more effective.",
     "- Use simple, natural language.",
-    "- Do not add an ending sentence that explains the desired tone or goal. Just write the message that way.",
+    "- primary must be the final rewritten message only.",
+    "- Start directly with the actual point. Do not include preambles like 'I care about us', 'Let me say this more clearly', 'I want to say this respectfully', 'What I mean is', or any sentence that explains the tone before the point.",
     "- Preserve the user's concrete facts and examples unless removing one is necessary to reduce unnecessary heat.",
-    "- Match the selected categories closely, especially relationship, intent, outcome, and after-state.",
-    "- If recipient is provided, naturally use the person's name near the start of the message.",
-    "- If afterState is Funny, make the message genuinely light or playful without becoming sarcastic or vague.",
+    "- Match the selected relationship dynamic and desired tone closely.",
+    "- If recipient is provided, use the person's name naturally once near the start only if it helps.",
+    "- tones may only use: clear, respectful, calm.",
     "- detectedIntent.id must be one of: explain, boundary, criticism, correction, frustration, help, clarify.",
-    "- summary must contain exactly 3 cards.",
-    "- conversationMap must contain exactly 4 cards.",
-    "- notes should be practical delivery guidance, not generic therapy advice.",
-    "- teleprompterLines should be short enough to read comfortably out loud.",
+    "- teleprompterLines must be short enough to read comfortably out loud and must be cut from the same final message in the same order.",
     "- Do not mention being an AI.",
     "- Return valid JSON only.",
     "",

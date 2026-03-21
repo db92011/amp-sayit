@@ -9,7 +9,7 @@ function buildFallback(payload, reason) {
     translation: buildTranslation(payload),
     meta: {
       source: "local",
-      label: "Local rewrite mode",
+      label: "Local engine fallback",
       reason: reason || "Fallback triggered.",
       mode: "rule-based",
       usedFallback: true
@@ -41,6 +41,10 @@ function validatePayload(payload) {
 }
 
 async function parseJsonSafely(response) {
+  if (typeof response?.text !== "function" && typeof response?.json === "function") {
+    return response.json();
+  }
+
   const text = await response.text();
 
   if (!text) {

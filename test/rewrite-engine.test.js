@@ -28,7 +28,8 @@ test("buildTranslation creates a primary draft, concise draft, and teleprompter 
     tones: ["clear", "direct"]
   });
 
-  assert.match(translation.primary, /I want|Let me|I hear/i);
+  assert.match(translation.primary, /misunderstanding|replied|sent the draft/i);
+  assert.doesNotMatch(translation.primary, /let me say this more clearly|i care about us/i);
   assert.ok(translation.concise.length > 30);
   assert.ok(Array.isArray(translation.teleprompterLines));
   assert.ok(translation.teleprompterLines.length >= 2);
@@ -68,7 +69,7 @@ test("buildTranslation rewrites heated cleanup drafts instead of echoing them ba
     afterState: "Kind"
   });
 
-  assert.match(translation.primary, /cleanup has been landing on me|share the dishes and cleanup/i);
+  assert.match(translation.primary, /dishes|kitchen cleanup|split/i);
   assert.doesNotMatch(translation.primary, /mess that you've created|hi hi honey|doing the dishes for years/i);
   assert.ok(translation.teleprompterLines.every((line) => !/mess that you've created/i.test(line)));
 });
@@ -93,7 +94,8 @@ test("buildTranslation expands short spouse drafts with warmth", () => {
     afterState: "Respectful"
   });
 
-  assert.match(translation.primary, /loving and honest|You matter to me/i);
+  assert.match(translation.primary, /dishes|cleanup|help/i);
+  assert.doesNotMatch(translation.primary, /i care about us|let me say this more clearly/i);
   assert.match(translation.primary, /dishes|cleanup/i);
 });
 
@@ -105,7 +107,7 @@ test("buildTranslation expands short boss drafts with professionalism", () => {
     afterState: "Confident"
   });
 
-  assert.match(translation.primary, /professionally|next step easy to respond to/i);
+  assert.match(translation.primary, /timing|change going forward|next step/i);
   assert.match(translation.primary, /^Mara,/i);
 });
 
@@ -157,7 +159,8 @@ test("translation API returns server metadata and translation payload", async ()
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(body.meta.runtime, "cloudflare-pages-function");
-  assert.match(body.translation.primary, /I want|Let me|I hear/i);
+  assert.doesNotMatch(body.translation.primary, /let me say this more clearly|i care about us/i);
+  assert.match(body.translation.primary, /stop snapping|reset/i);
 });
 
 test("translation API returns normalized OpenAI translation when configured", async () => {
@@ -236,8 +239,10 @@ test("translation API returns normalized OpenAI translation when configured", as
     assert.equal(body.meta.mode, "openai");
     assert.match(authHeader, /Bearer configured-key/);
     assert.match(String(requestBody?.input || ""), /"relationship": "Boss or supervisor"/);
-    assert.match(String(requestBody?.input || ""), /"afterState": "Clear"/);
+    assert.match(String(requestBody?.input || ""), /"desiredTone": "Clear"/);
     assert.equal(body.translation.detectedIntent.id, "clarify");
+    assert.equal(body.translation.primary, "I want to reset this calmly.");
+    assert.deepEqual(body.translation.teleprompterLines, ["I want to reset this calmly."]);
     assert.equal(body.translation.summary.length, 3);
     assert.equal(body.translation.conversationMap.length, 4);
     assert.equal(body.translation.notes.length, 3);

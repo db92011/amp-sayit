@@ -6,6 +6,7 @@ const STORAGE_KEY = "sayit-draft-v4";
 const SAYIT_PRO_ACTIVE_KEY = "sayit_pro_active";
 const SAYIT_PRO_EMAIL_KEY = "sayit_pro_email";
 const SAYIT_DEVICE_ID_KEY = "sayit_device_id";
+const DEFAULT_AFTER_STATE = "Clear";
 
 function safeTrim(value = "") {
   return String(value || "").trim();
@@ -61,10 +62,12 @@ const fields = {
   recipient: document.querySelector("#recipient"),
   relationship: document.querySelector("#relationship"),
   situation: document.querySelector("#situation"),
-  message: document.querySelector("#message"),
-  intent: document.querySelector("#intent"),
-  afterState: document.querySelector("#after-state")
+  message: document.querySelector("#message")
 };
+
+const afterStateInputs = Array.from(
+  document.querySelectorAll('input[name="afterState"]')
+);
 
 let latestMessageText = "";
 let continueBusy = false;
@@ -95,6 +98,26 @@ function detectRuntimeMode() {
   const iosStandalone = window.navigator.standalone === true;
   const displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
   return iosStandalone || displayStandalone ? "standalone" : "browser";
+}
+
+function getSelectedAfterState() {
+  const selected = afterStateInputs.find((input) => input.checked);
+  return selected?.value || DEFAULT_AFTER_STATE;
+}
+
+function setSelectedAfterState(value = DEFAULT_AFTER_STATE) {
+  const target = String(value || "").trim() || DEFAULT_AFTER_STATE;
+  let matched = false;
+
+  for (const input of afterStateInputs) {
+    const isMatch = input.value === target;
+    input.checked = isMatch;
+    matched ||= isMatch;
+  }
+
+  if (!matched && afterStateInputs[0]) {
+    afterStateInputs[0].checked = true;
+  }
 }
 
 function refreshRuntimeModeUi() {
@@ -630,9 +653,9 @@ function collectData() {
     relationship: fields.relationship.value,
     situation,
     message: transcript || situation,
-    intent: fields.intent.value,
+    intent: "auto",
     outcome: "",
-    afterState: fields.afterState.value
+    afterState: getSelectedAfterState()
   };
 }
 
@@ -712,7 +735,8 @@ async function generateTranslation({ openTeleprompterOnComplete = false } = {}) 
 function persistDraft() {
   const payload = {
     ...collectData(),
-    message: fields.message.value.trim()
+    message: fields.message.value.trim(),
+    afterState: getSelectedAfterState()
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -731,6 +755,12 @@ function hydrateDraft() {
       }
     }
 
+    if (typeof draft.afterState === "string") {
+      setSelectedAfterState(draft.afterState);
+    } else {
+      setSelectedAfterState(DEFAULT_AFTER_STATE);
+    }
+
     updateVoicePreview("");
     return true;
   } catch {
@@ -741,6 +771,7 @@ function hydrateDraft() {
 function resetForm() {
   speechController?.stop?.();
   form.reset();
+  setSelectedAfterState(DEFAULT_AFTER_STATE);
   fields.message.value = "";
   updateVoicePreview("");
   clearOutputs();

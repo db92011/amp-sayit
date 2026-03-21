@@ -133,54 +133,41 @@
                 />
               </label>
 
-              <div class="row2">
-                <label class="field">
-                  <span>Relationship dynamic</span>
-                  <select id="relationship" name="relationship">
-                    <option value="">Select a dynamic</option>
-                    <option>Spouse or partner</option>
-                    <option>Child or teenager</option>
-                    <option>Friend</option>
-                    <option>Coworker</option>
-                    <option>Boss or supervisor</option>
-                    <option>Employee or subordinate</option>
-                    <option>Customer</option>
-                    <option>Client</option>
-                    <option>Stranger</option>
-                    <option>Online conversation</option>
-                    <option>Social media comment</option>
-                  </select>
-                </label>
-
-                <label class="field">
-                  <span>Core intent</span>
-                  <select id="intent" name="intent">
-                    <option value="auto">Auto-detect from your message</option>
-                    <option value="explain">Explain a problem</option>
-                    <option value="boundary">Set a boundary</option>
-                    <option value="criticism">Respond to criticism</option>
-                    <option value="correction">Correct someone</option>
-                    <option value="frustration">Express frustration</option>
-                    <option value="help">Ask for help</option>
-                    <option value="clarify">Clarify something</option>
-                  </select>
-                </label>
-              </div>
-
               <label class="field">
-                <span>How do I want this message to come across?</span>
-                <select id="after-state" name="afterState">
-                  <option value="">Select how I want it to come across</option>
-                  <option>Clear</option>
-                  <option>Respectful</option>
-                  <option>Calm</option>
-                  <option>Smart</option>
-                  <option>Short</option>
-                  <option>Confident</option>
-                  <option>Funny</option>
-                  <option>Easy to understand</option>
+                <span>Relationship dynamic</span>
+                <select id="relationship" name="relationship">
+                  <option value="">Select a dynamic</option>
+                  <option>Spouse or partner</option>
+                  <option>Child or teenager</option>
+                  <option>Friend</option>
+                  <option>Coworker</option>
+                  <option>Boss or supervisor</option>
+                  <option>Employee or subordinate</option>
+                  <option>Customer</option>
+                  <option>Client</option>
+                  <option>Stranger</option>
+                  <option>Online conversation</option>
+                  <option>Social media comment</option>
                 </select>
               </label>
+
+              <fieldset class="field field-choice">
+                <legend>How should this come across?</legend>
+                <div class="choice-grid">
+                  <label class="choice-pill">
+                    <input type="radio" name="afterState" value="Clear" checked />
+                    <span>Clear</span>
+                  </label>
+                  <label class="choice-pill">
+                    <input type="radio" name="afterState" value="Respectful" />
+                    <span>Respectful</span>
+                  </label>
+                  <label class="choice-pill">
+                    <input type="radio" name="afterState" value="Calm" />
+                    <span>Calm</span>
+                  </label>
+                </div>
+              </fieldset>
 
               <label class="field field-large">
                 <span>Extra context (optional)</span>
