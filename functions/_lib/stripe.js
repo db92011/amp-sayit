@@ -5,10 +5,9 @@ export function hasStripeBillingConfig(env) {
   const secretKeyPresent = Boolean(
     String(env?.STRIPE_SECRET_KEY || env?.Stripe_Secret_Key_SayIt || "").trim()
   );
-  const publishableKeyPresent = Boolean(String(env?.STRIPE_PUBLISHABLE_KEY || "").trim());
   const priceIdPresent = Boolean(String(env?.SAYIT_STRIPE_PRICE_ID || "").trim());
 
-  return secretKeyPresent && publishableKeyPresent && priceIdPresent;
+  return secretKeyPresent && priceIdPresent;
 }
 
 function requireEnv(env, key) {
@@ -64,7 +63,7 @@ async function stripeRequest(path, env, init = {}) {
 export function getStripeConfig(env) {
   return {
     secretKey: requireAnyEnv(env, ["STRIPE_SECRET_KEY", "Stripe_Secret_Key_SayIt"]),
-    publishableKey: requireEnv(env, "STRIPE_PUBLISHABLE_KEY"),
+    publishableKey: String(env?.STRIPE_PUBLISHABLE_KEY || "").trim(),
     priceId: requireEnv(env, "SAYIT_STRIPE_PRICE_ID"),
     directCheckoutUrl: String(env?.SAYIT_STRIPE_URL || "").trim(),
     appUrl: String(env?.SAYIT_APP_URL || "https://amp-sayit.pages.dev").trim(),
