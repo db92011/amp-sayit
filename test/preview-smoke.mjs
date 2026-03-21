@@ -23,14 +23,16 @@ async function fetchJson(url, init, label) {
   return await response.json();
 }
 
-const html = await fetchText(resolveUrl("/"), "Preview HTML");
-assert.match(html, /<title>SayIt!<\/title>/i, "Preview should render the app title");
-assert.match(html, /id="intake-form"/i, "Preview should render the app shell");
-assert.match(html, /id="plusModal"/i, "Preview should include the plus upsell modal shell");
+const html = await fetchText(resolveUrl("/"), "Install HTML");
+assert.match(html, /<title>SayIt!<\/title>/i, "Install surface should render the app title");
+assert.match(html, /Install SayIt/i, "Install surface should explain the install flow");
+assert.doesNotMatch(html, /id="intake-form"/i, "Install surface should not expose the app shell");
 
-const appHtml = await fetchText(resolveUrl("/?preview=app-mobile"), "App preview HTML");
+const appHtml = await fetchText(resolveUrl("/app.html?preview=app-mobile"), "App preview HTML");
 assert.match(appHtml, /window\.__SAYIT_PREVIEW_MODE__/i, "App preview should include preview bootstrapping");
 assert.match(appHtml, /preview-app-mobile/i, "App preview should include mobile preview mode styling hooks");
+assert.match(appHtml, /window\.location\.replace\(\"\/#install\"\)/i, "App shell should guard direct browser access");
+assert.match(appHtml, /id="intake-form"/i, "App preview should render the app shell");
 assert.match(appHtml, /id="teleprompter-overlay"/i, "App preview should include the teleprompter shell");
 assert.match(appHtml, /id="plusModal"/i, "App preview should include the plus upsell modal shell");
 

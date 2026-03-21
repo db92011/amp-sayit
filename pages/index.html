@@ -8,7 +8,11 @@
     />
     <title>SayIt!</title>
 
-    <meta name="theme-color" content="#0b0f14" />
+    <meta
+      name="description"
+      content="Install SayIt! on your device. Add it to your Home Screen or desktop and the icon will open the real SayIt! app."
+    />
+    <meta name="theme-color" content="#20a8ff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -16,49 +20,32 @@
     />
     <meta name="apple-mobile-web-app-title" content="SayIt!" />
 
+    <meta property="og:title" content="SayIt!" />
+    <meta
+      property="og:description"
+      content="Install SayIt! on your device and launch directly into the app."
+    />
+    <meta property="og:type" content="website" />
+
     <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-180.png" />
-    <link rel="stylesheet" href="/app.css" />
 
     <script>
       (function () {
-        var url = new URL(window.location.href);
-        var iosStandalone = window.navigator.standalone === true;
-        var displayStandalone = false;
+        var isStandalone = false;
 
         try {
-          displayStandalone = window.matchMedia("(display-mode: standalone)").matches;
+          isStandalone =
+            window.matchMedia("(display-mode: standalone)").matches ||
+            window.navigator.standalone === true ||
+            document.referrer.indexOf("android-app://") === 0;
         } catch (error) {}
 
-        var isStandalone = iosStandalone || displayStandalone;
-        var previewRequested =
-          url.searchParams.get("preview") === "1" ||
-          url.searchParams.get("preview") === "app-mobile";
-
-        if (previewRequested) {
-          try {
-            sessionStorage.setItem("sayit_app_preview", "1");
-          } catch (error) {}
-        }
-
-        var previewGranted = false;
-        try {
-          previewGranted = sessionStorage.getItem("sayit_app_preview") === "1";
-        } catch (error) {}
-
-        window.__SAYIT_PREVIEW_MODE__ = previewRequested || previewGranted ? "app-mobile" : "";
-
-        if (window.__SAYIT_PREVIEW_MODE__) {
-          document.documentElement.classList.add("preview-app-mobile");
-        }
-
-        document.documentElement.setAttribute(
-          "data-standalone",
-          isStandalone ? "yes" : "no"
-        );
-
-        if (!isStandalone) {
-          document.documentElement.classList.add("browser-hosted");
+        if (isStandalone) {
+          window.location.replace("/app.html?source=pwa");
+          return;
         }
 
         if ("serviceWorker" in navigator) {
@@ -71,370 +58,201 @@
       })();
     </script>
   </head>
+  <body class="sayit-install">
+    <a class="skip" href="#main">Skip to content</a>
 
-  <body class="app">
-    <div class="app-install-banner" data-install-banner hidden>
-      <div class="app-install-banner-copy">
-        <strong>You are on the real SayIt! app.</strong>
-        <span>On iPhone, tap Share, then Add to Home Screen.</span>
-      </div>
-      <a class="app-install-banner-link" href="https://sayit-marketing-site.pages.dev/#install">Install help</a>
-    </div>
-
-    <div class="page">
-      <div class="shell">
-        <header class="header">
-          <div class="brand">
-            <img
-              class="brand-logo"
-              src="/assets/sayit-app-icon.png"
-              alt="SayIt!"
-            />
-            <div class="brandText">
-              <strong>SayIt!</strong>
-              <p>Clearer conversations, in your own voice.</p>
-            </div>
-          </div>
-
-          <div class="headerActions">
-            <button
-              type="button"
-              id="reset-form"
-              class="ghost-button header-button"
-            >
-              Clear
-            </button>
-          </div>
-        </header>
-
-        <main class="main">
-          <form id="intake-form" class="intake-form">
-            <section class="panel app-section intake-card">
-              <div class="panelHeading">
-                <div class="panelEyebrow">Compose</div>
-                <p class="panelIntro">
-                  Shape the message before it leaves your mouth or your keyboard.
-                </p>
-              </div>
-
-              <label class="field field-short">
-                <span>Who are you talking to?</span>
-                <input
-                  id="recipient"
-                  name="recipient"
-                  type="text"
-                  placeholder="Name"
-                />
-              </label>
-
-              <div class="row2">
-                <label class="field">
-                  <span>Relationship dynamic</span>
-                  <select id="relationship" name="relationship">
-                    <option value="">Select a dynamic</option>
-                    <option>Spouse or partner</option>
-                    <option>Child or teenager</option>
-                    <option>Friend</option>
-                    <option>Coworker</option>
-                    <option>Boss or supervisor</option>
-                    <option>Employee or subordinate</option>
-                    <option>Customer</option>
-                    <option>Client</option>
-                    <option>Stranger</option>
-                    <option>Online conversation</option>
-                    <option>Social media comment</option>
-                  </select>
-                </label>
-
-                <label class="field">
-                  <span>Core intent</span>
-                  <select id="intent" name="intent">
-                    <option value="auto">Auto-detect from your message</option>
-                    <option value="explain">Explain a problem</option>
-                    <option value="boundary">Set a boundary</option>
-                    <option value="criticism">Respond to criticism</option>
-                    <option value="correction">Correct someone</option>
-                    <option value="frustration">Express frustration</option>
-                    <option value="help">Ask for help</option>
-                    <option value="clarify">Clarify something</option>
-                  </select>
-                </label>
-              </div>
-
-              <label class="field">
-                <span>How do I want this message to come across?</span>
-                <select id="after-state" name="afterState">
-                  <option value="">Select how I want it to come across</option>
-                  <option>Clear</option>
-                  <option>Respectful</option>
-                  <option>Calm</option>
-                  <option>Smart</option>
-                  <option>Short</option>
-                  <option>Confident</option>
-                  <option>Funny</option>
-                  <option>Easy to understand</option>
-                </select>
-              </label>
-
-              <label class="field field-large">
-                <span>Extra context (optional)</span>
-                <textarea
-                  id="situation"
-                  name="situation"
-                  rows="4"
-                  placeholder="Add more information here."
-                ></textarea>
-              </label>
-
-              <label class="field field-large">
-                <span>What do you want to say?</span>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows="7"
-                  placeholder=""
-                ></textarea>
-              </label>
-
-              <p id="voice-preview" class="voice-preview"></p>
-              <p id="voice-status" class="voice-status"></p>
-
-              <div class="voice-actions">
-                <button
-                  type="button"
-                  id="voice-start"
-                  class="ghost-button compact-button"
-                >
-                  Record
-                </button>
-                <button
-                  type="submit"
-                  id="translate-action"
-                  class="primary-button compact-button"
-                >
-                  Generate
-                </button>
-              </div>
-
-              <p id="teleprompter-summary" class="teleprompter-summary"></p>
-            </section>
-          </form>
-
-          <section class="panel resultWrap">
-            <div class="panelHeading resultHeading">
-              <div class="panelEyebrow">Refined draft</div>
-              <p class="panelIntro">
-                Your cleaner version appears here, ready to copy or read aloud.
-              </p>
-            </div>
-
-            <div class="resultTop">
-              <label for="result">Result</label>
-              <div class="badgeCount">
-                <span id="charCount">0</span> chars
-              </div>
-            </div>
-
-            <textarea id="result" readonly placeholder=""></textarea>
-
-            <div class="resultActions">
-              <button type="button" id="copy-result" class="ghost-button">
-                Copy
-              </button>
-              <button
-                type="button"
-                id="open-teleprompter"
-                class="ghost-button"
-                hidden
-              >
-                Teleprompter
-              </button>
-            </div>
-          </section>
-        </main>
-      </div>
-    </div>
-
-    <div class="counterBar" aria-live="polite">
-      <span id="counterText"></span>
-    </div>
-
-    <div id="plusModal" class="modalOverlay" hidden>
-      <div
-        class="modalCard"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="plusTitle"
-      >
-        <div class="modalBanner">
-          <div class="modalBannerInner">
-            <div class="modalLogo">
-              <img
-                class="modalLogoImg"
-                src="/assets/sayit-app-icon.png"
-                alt="SayIt!"
-              />
-            </div>
-            <div>
-              <div id="plusTitle" class="modalTitle">Unlock SayIt! Pro</div>
-              <div class="modalSub">
-                Use your email to restore access or start a subscription.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modalBody">
-          <ul class="modalList">
-            <li>
-              <strong>Already subscribed?</strong> We’ll unlock this device for
-              your account.
-            </li>
-            <li>
-              <strong>New to Pro?</strong> We’ll send you to Stripe to finish
-              setup.
-            </li>
-          </ul>
-
-          <div class="modalFine">$2/month · Stripe handles billing</div>
-
-          <label class="modalLabel" for="plusEmail">Email</label>
-          <input
-            id="plusEmail"
-            class="modalInput"
-            type="email"
-            placeholder="Email address"
-            autocomplete="email"
+    <header class="sayit-header">
+      <div class="sayit-wrap">
+        <a class="brand-lockup" href="/" aria-label="SayIt! install home">
+          <img
+            class="brand-mark"
+            src="/assets/sayit-app-icon.png"
+            alt="SayIt!"
+            width="44"
+            height="44"
           />
+          <div class="brand-copy">
+            <div class="brand-name">SayIt!</div>
+            <div class="brand-tag">Clearer conversations</div>
+          </div>
+        </a>
 
-          <div
-            id="deviceLimitMsg"
-            aria-live="polite"
-            style="display: none; margin-top: 12px; font-size: 14px; line-height: 1.35;"
-          ></div>
-
-          <button
-            id="manageDevicesLink"
-            type="button"
-            class="ghost-button"
-            style="display: none; margin-top: 10px; width: 100%;"
-          >
-            Remove oldest device
-          </button>
-        </div>
-
-        <div class="modalActions">
-          <button id="plusCancelBtn" type="button" class="ghost-button">
-            Cancel
-          </button>
-          <button id="plusContinueBtn" type="button" class="primary-button">
-            Continue
-          </button>
-        </div>
+        <nav class="sayit-nav" aria-label="Primary">
+          <a href="#how" class="nav-link">How it works</a>
+          <a href="#install" class="nav-link">Install</a>
+          <a href="#privacy" class="nav-link">Privacy</a>
+        </nav>
       </div>
-    </div>
+    </header>
 
-    <div
-      id="teleprompter-overlay"
-      class="teleprompter-overlay"
-      hidden
-      aria-hidden="true"
-    >
-      <section
-        class="teleprompter-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="teleprompter-overlay-title"
-      >
-        <h2 id="teleprompter-overlay-title" class="visually-hidden">
-          Your message
-        </h2>
+    <main id="main">
+      <section class="hero">
+        <div class="sayit-wrap hero-grid">
+          <div class="hero-copy">
+            <div class="pill">Install-only app surface</div>
 
-        <section class="teleprompter-layout">
-          <aside
-            class="teleprompter-sidebar"
-            aria-label="Teleprompter controls"
-          >
-            <div class="teleprompter-sidebar-group teleprompter-sidebar-group-top">
-              <button
-                id="copy-message"
-                type="button"
-                class="teleprompter-rail-button"
-              >
-                Copy
-              </button>
-              <button
-                id="teleprompter-playback"
-                type="button"
-                class="teleprompter-rail-button"
-              >
-                Pause
-              </button>
+            <h1 class="hero-title">Install SayIt and launch straight into the app.</h1>
+
+            <p class="hero-sub">
+              This page is the SayIt installer on the app domain. Add this page to your Home Screen
+              or desktop and the saved icon opens the real SayIt app, not the marketing site.
+            </p>
+
+            <div class="cta-row">
+              <a class="btn btn-primary" href="#install">Install SayIt</a>
+              <a class="btn btn-ghost" href="#how">How it works</a>
             </div>
 
-            <div class="teleprompter-sidebar-group teleprompter-sidebar-group-middle">
-              <div class="teleprompter-speed-control">
-                <button
-                  id="teleprompter-speed-toggle"
-                  type="button"
-                  class="teleprompter-rail-button teleprompter-speed-toggle"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  aria-controls="speed-group"
-                >
-                  Speed: Slow
-                </button>
-                <div class="teleprompter-speed-popover" id="speed-group" hidden>
-                  <button
-                    type="button"
-                    data-speed="slow"
-                    class="teleprompter-rail-button speed-button is-active"
-                  >
-                    Slow
-                  </button>
-                  <button
-                    type="button"
-                    data-speed="medium"
-                    class="teleprompter-rail-button speed-button"
-                  >
-                    Medium
-                  </button>
-                  <button
-                    type="button"
-                    data-speed="fast"
-                    class="teleprompter-rail-button speed-button"
-                  >
-                    Fast
-                  </button>
+            <div class="trust-row">
+              <div class="trust-item">
+                <div class="trust-title">Correct handoff</div>
+                <div class="trust-text">
+                  The install sheet should show <strong>sayitapp.pages.dev</strong>, not the marketing URL.
+                </div>
+              </div>
+              <div class="trust-item">
+                <div class="trust-title">App launch</div>
+                <div class="trust-text">
+                  The Home Screen or Dock icon launches the real SayIt app shell after install.
+                </div>
+              </div>
+              <div class="trust-item">
+                <div class="trust-title">No marketing loop</div>
+                <div class="trust-text">
+                  This installer is separate from the marketing site so you stop saving the wrong page.
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="teleprompter-sidebar-group teleprompter-sidebar-group-close">
-              <button
-                id="close-teleprompter"
-                type="button"
-                class="teleprompter-rail-button"
-              >
-                Close
-              </button>
+          <div class="hero-card">
+            <h2 class="card-title">What happens after install</h2>
+            <ul class="clean-list">
+              <li><strong>Add this page</strong> to your device from Safari, Chrome, Edge, or Safari on Mac.</li>
+              <li><strong>The icon opens SayIt</strong> on the protected app route instead of back to this installer.</li>
+              <li><strong>Browser visits to the app route</strong> return to this page, so the app stays install-first.</li>
+              <li><strong>Sign in or unlock Pro</strong> inside the app after launch.</li>
+            </ul>
+
+            <div class="note">
+              If the install sheet ever shows <strong>sayit-marketing-site.pages.dev</strong>, you are on the wrong page.
             </div>
-          </aside>
+          </div>
+        </div>
+      </section>
 
-          <section class="teleprompter-card teleprompter-panel teleprompter-reader">
-            <div id="teleprompter" class="teleprompter">
-              <div class="teleprompter-highlight-guide" aria-hidden="true"></div>
-              <div id="teleprompter-script" class="teleprompter-script">
-                <p class="teleprompter-placeholder">
-                  Generate a translated message to load teleprompter mode.
-                </p>
+      <section class="section" id="how">
+        <div class="sayit-wrap">
+          <h2 class="section-title">How it works</h2>
+          <p class="section-sub">
+            SayIt uses an install-first flow. You install from this page, then the saved icon launches
+            the real app shell for composing, rewriting, and teleprompter mode.
+          </p>
+
+          <div class="grid3">
+            <div class="tile">
+              <h3>1. Stay on this app page</h3>
+              <p>Do the install from <strong>sayitapp.pages.dev</strong>, not from the marketing site.</p>
+            </div>
+            <div class="tile">
+              <h3>2. Use your device install flow</h3>
+              <p>Safari, Chrome, Edge, and desktop browsers handle the install natively.</p>
+            </div>
+            <div class="tile">
+              <h3>3. Open the saved icon</h3>
+              <p>After install, the icon launches the real SayIt experience instead of looping back here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install">
+        <div class="sayit-wrap">
+          <h2 class="section-title">Install</h2>
+          <p class="section-sub">
+            Use the install flow built into your device. This page is the correct place to do it.
+          </p>
+
+          <div class="install-grid">
+            <div class="install-card">
+              <h3>iPhone / iPad</h3>
+              <ol>
+                <li>Open this page in <strong>Safari</strong>.</li>
+                <li>Tap <strong>Share</strong>.</li>
+                <li>Choose <strong>Add to Home Screen</strong>.</li>
+                <li>Open SayIt from your Home Screen.</li>
+              </ol>
+              <div class="small-note">
+                If you see the marketing URL in the sheet, back out and return to this app-domain page first.
               </div>
             </div>
-          </section>
-        </section>
-      </section>
-    </div>
 
-    <script type="module" src="/app.js"></script>
+            <div class="install-card">
+              <h3>Android</h3>
+              <ol>
+                <li>Open this page in <strong>Chrome</strong>.</li>
+                <li>Use the menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                <li>Open SayIt from your home screen.</li>
+              </ol>
+              <div class="small-note">
+                Chrome will install from this page and then launch into the real app shell.
+              </div>
+            </div>
+
+            <div class="install-card">
+              <h3>Mac / Windows</h3>
+              <ol>
+                <li>Open this page in <strong>Chrome</strong>, <strong>Edge</strong>, or <strong>Safari</strong>.</li>
+                <li>Use the browser’s install option or add it to your Dock.</li>
+                <li>Open SayIt from the saved app icon.</li>
+              </ol>
+              <div class="small-note">
+                The installed shortcut launches the SayIt app instead of this installer page.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="privacy">
+        <div class="sayit-wrap">
+          <h2 class="section-title">Privacy</h2>
+          <div class="how-story">
+            <div class="how-card">
+              <p>
+                SayIt is built to stay lightweight, direct, and private. This install surface only
+                exists to hand off cleanly into the app.
+              </p>
+              <p>
+                No app-store gatekeeping, no marketing-page install loops, and no giant software machine
+                between you and the tool.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta">
+        <div class="sayit-wrap final-cta-inner">
+          <h2>Ready when the conversation matters.</h2>
+          <p>Install SayIt from this page, then open it from your device like a real app.</p>
+
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#install">Install SayIt</a>
+          </div>
+
+          <div class="privacy-line">Useful apps. Clean incentives. No surveillance theater.</div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="sayit-footer">
+      <div class="sayit-wrap footer-inner">
+        <div>&copy; <span data-current-year></span> Circle The People Inc.</div>
+        <div>Clearer conversations.</div>
+      </div>
+    </footer>
+
+    <script src="/index.js" defer></script>
   </body>
 </html>
