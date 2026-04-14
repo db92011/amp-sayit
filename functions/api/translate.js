@@ -8,6 +8,7 @@ import {
 
 const OPENAI_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
+const DEFAULT_OPENAI_TIMEOUT_MS = 3500;
 const OPENAI_TONE_GUIDANCE = {
   Clear: "Lead with the real point, keep the facts concrete, and make the ask easy to repeat back.",
   Respectful:
@@ -59,6 +60,15 @@ const DEFAULT_OPENAI_BEHAVIOR = [
 
 function getOpenAiApiKey(env) {
   return String(env?.OPENAI_API_KEY || env?.OpenAi_SayIt_Secret_Key || "").trim();
+}
+
+function getOpenAiTimeoutMs(env) {
+  const parsed = Number.parseInt(String(env?.OPENAI_TIMEOUT_MS || ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_OPENAI_TIMEOUT_MS;
+  }
+
+  return Math.max(500, parsed);
 }
 
 function json(data, init = {}) {
@@ -285,26 +295,41 @@ async function requestOpenAiTranslation(payload, env) {
     throw new Error("OpenAI API key not configured.");
   }
 
-  const response = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: String(env?.OPENAI_MODEL || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL,
-      instructions: getOpenAiBehavior(env),
-      input: buildOpenAiPrompt(payload)
-    })
-  });
+  const controller = new AbortController();
+  const timeoutMs = getOpenAiTimeoutMs(env);
+  const timeout = setTimeout(() => controller.abort(new Error(`OpenAI request timed out after ${timeoutMs}ms.`)), timeoutMs);
 
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(body?.error?.message || `OpenAI request failed with status ${response.status}.`);
+  try {
+    const response = await fetch(OPENAI_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: String(env?.OPENAI_MODEL || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL,
+        instructions: getOpenAiBehavior(env),
+        input: buildOpenAiPrompt(payload)
+      })
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body?.error?.message || `OpenAI request failed with status ${response.status}.`);
+    }
+
+    const text = extractTextFromResponse(body);
+    return parseJsonObject(text);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`OpenAI request timed out after ${timeoutMs}ms.`);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const text = extractTextFromResponse(body);
-  return parseJsonObject(text);
 }
 
 async function translate(payload, env) {
@@ -325,6 +350,7 @@ async function translate(payload, env) {
         runtime: "cloudflare-pages-function",
         mode: "openai",
         model: String(env?.OPENAI_MODEL || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL,
+        timeoutMs: getOpenAiTimeoutMs(env),
         providerConfigured: true,
         behaviorConfigured: Boolean(String(env?.OPENAI_BEHAVIOR || "").trim())
       }
@@ -344,6 +370,7 @@ async function translate(payload, env) {
       meta: {
         runtime: "cloudflare-pages-function",
         mode: "rule-based",
+        timeoutMs: getOpenAiTimeoutMs(env),
         providerConfigured: Boolean(getOpenAiApiKey(env)),
         behaviorConfigured: Boolean(String(env?.OPENAI_BEHAVIOR || "").trim()),
         fallbackReason: reason
@@ -360,7 +387,8 @@ export function onRequestGet({ env }) {
     runtime: "cloudflare-pages-function",
     providerConfigured: Boolean(getOpenAiApiKey(env)),
     behaviorConfigured: Boolean(String(env?.OPENAI_BEHAVIOR || "").trim()),
-    model: String(env?.OPENAI_MODEL || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL
+    model: String(env?.OPENAI_MODEL || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL,
+    timeoutMs: getOpenAiTimeoutMs(env)
   });
 }
 

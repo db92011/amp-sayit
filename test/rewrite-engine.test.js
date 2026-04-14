@@ -253,6 +253,7 @@ test("translation API returns normalized OpenAI translation when configured", as
 
     const body = await response.json();
     assert.equal(body.meta.mode, "openai");
+    assert.equal(body.meta.timeoutMs, 3500);
     assert.match(authHeader, /Bearer configured-key/);
     assert.match(String(requestBody?.input || ""), /"relationship": "Boss or supervisor"/);
     assert.match(String(requestBody?.input || ""), /"desiredTone": "Clear"/);
@@ -281,6 +282,48 @@ test("translation API returns normalized OpenAI translation when configured", as
     assert.equal(body.translation.conversationMap.length, 4);
     assert.equal(body.translation.notes.length, 3);
     assert.equal(body.translation.toneMap[0].tone, "calm");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("translation API falls back quickly when OpenAI times out", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (_url, init) =>
+    new Promise((_resolve, reject) => {
+      init.signal.addEventListener("abort", () => reject(new Error("aborted")));
+    });
+
+  try {
+    const response = await onRequestPost({
+      request: new Request("http://localhost/api/translate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          recipient: "My partner",
+          relationship: "Spouse or partner",
+          situation: "A disagreement is starting.",
+          message: "I want us to stop snapping and reset this calmly.",
+          intent: "clarify",
+          outcome: "Clear",
+          afterState: "Clear"
+        })
+      }),
+      env: {
+        OPENAI_API_KEY: "configured-key",
+        OPENAI_TIMEOUT_MS: "25"
+      }
+    });
+
+    const body = await response.json();
+    assert.equal(body.ok, true);
+    assert.equal(body.meta.mode, "rule-based");
+    assert.equal(body.meta.timeoutMs, 500);
+    assert.match(body.meta.fallbackReason, /timed out after 500ms/i);
+    assert.equal(body.translation.diagnostics.source, "rule-based");
   } finally {
     globalThis.fetch = originalFetch;
   }
