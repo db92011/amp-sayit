@@ -777,6 +777,30 @@ function trackProductLedEvent(eventType, event = {}) {
   } catch {}
 }
 
+function captureProductLedProof(proof) {
+  try {
+    fetch("https://help.circlethepeople.com/api/product-led/proof", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        product_slug: "sayit",
+        source: "sayit_app",
+        surface: "product_led_output",
+        before_text: proof.before,
+        after_text: proof.after,
+        attribution_enabled: proof.attribution,
+        context: {
+          relationship: proof.relationship || null,
+          after_state: proof.afterState || null,
+          surface: "sayit_app",
+          attribution: proof.attribution
+        }
+      }),
+      keepalive: true
+    }).catch(() => {});
+  } catch {}
+}
+
 function buildShareCard() {
   const before = safeTrim(latestProofInput?.message || latestProofInput?.situation || "");
   const after = safeTrim(latestMessageText);
@@ -1135,6 +1159,7 @@ function saveLatestProofDraft() {
   }
 
   setTeleprompterSummary("Proof saved on this device.");
+  captureProductLedProof(proof);
   trackProductLedEvent("proof_saved", {
     relationship: proof.relationship || null,
     after_state: proof.afterState || null,
