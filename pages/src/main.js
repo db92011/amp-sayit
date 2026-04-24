@@ -53,6 +53,9 @@ const submitButton = document.querySelector("#translate-action");
 const counterText = document.querySelector("#counterText");
 
 const copyResultButton = document.querySelector("#copy-result");
+const shareResultButton = document.querySelector("#share-result");
+const saveProofButton = document.querySelector("#save-proof");
+const includeAttributionInput = document.querySelector("#include-attribution");
 const teleprompterCopyButton = document.querySelector("#copy-message");
 const closeTeleprompterButton = document.querySelector("#close-teleprompter");
 const openTeleprompterButton = document.querySelector("#open-teleprompter");
@@ -82,6 +85,7 @@ const afterStateInputs = Array.from(
 );
 
 let latestMessageText = "";
+let latestProofInput = null;
 let continueBusy = false;
 let removeBusy = false;
 let appLocked = false;
@@ -725,6 +729,95 @@ function setCopyButtonLabel(label) {
   if (teleprompterCopyButton) teleprompterCopyButton.textContent = label;
 }
 
+function getProductLedSessionId() {
+  const key = "sayit_product_led_session";
+  try {
+    let existing = localStorage.getItem(key);
+    if (existing) return existing;
+    existing = window.crypto?.randomUUID?.() || `sayit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(key, existing);
+    return existing;
+  } catch {
+    return `sayit_${Date.now()}`;
+  }
+}
+
+function trackProductLedEvent(eventType, event = {}) {
+  const payload = {
+    session_id: getProductLedSessionId(),
+    event_type: eventType,
+    site_key: "circlethepeople",
+    product_key: "sayit",
+    page_slug: "sayit-app",
+    event: {
+      surface: "product_led_output",
+      ...event
+    }
+  };
+
+  try {
+    fetch("https://help.circlethepeople.com/api/tracking/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        session_id: payload.session_id,
+        site_key: payload.site_key,
+        first_page_slug: payload.page_slug,
+        referrer: document.referrer || null
+      }),
+      keepalive: true
+    }).catch(() => {});
+
+    fetch("https://help.circlethepeople.com/api/tracking/event", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(() => {});
+  } catch {}
+}
+
+function buildShareCard() {
+  const before = safeTrim(latestProofInput?.message || latestProofInput?.situation || "");
+  const after = safeTrim(latestMessageText);
+  const lines = [
+    "Before:",
+    before,
+    "",
+    "After:",
+    after
+  ];
+
+  if (includeAttributionInput?.checked) {
+    lines.push("", "Made easier with SayIt: https://circlethepeople.com/sayit");
+  }
+
+  return lines.join("\n");
+}
+
+function saveProofDraft() {
+  if (!latestMessageText || !latestProofInput) return null;
+  const proof = {
+    id: `sayit_proof_${Date.now()}`,
+    product: "sayit",
+    created_at: new Date().toISOString(),
+    before: latestProofInput.message || latestProofInput.situation || "",
+    after: latestMessageText,
+    relationship: latestProofInput.relationship || "",
+    afterState: latestProofInput.afterState || "",
+    attribution: Boolean(includeAttributionInput?.checked)
+  };
+
+  try {
+    const key = "sayit_proof_drafts";
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.unshift(proof);
+    localStorage.setItem(key, JSON.stringify(existing.slice(0, 50)));
+  } catch {}
+
+  return proof;
+}
+
 function setResultText(text = "") {
   const nextText = String(text || "");
   if (resultField) resultField.value = nextText;
@@ -739,6 +832,16 @@ function syncTeleprompterControls() {
   if (copyResultButton) {
     copyResultButton.disabled = !latestMessageText;
     copyResultButton.classList.toggle("is-active", Boolean(latestMessageText));
+  }
+
+  if (shareResultButton) {
+    shareResultButton.disabled = !latestMessageText;
+    shareResultButton.classList.toggle("is-active", Boolean(latestMessageText));
+  }
+
+  if (saveProofButton) {
+    saveProofButton.disabled = !latestMessageText;
+    saveProofButton.classList.toggle("is-active", Boolean(latestMessageText));
   }
 
   if (teleprompterCopyButton) {
@@ -844,6 +947,7 @@ function collectData() {
 function clearOutputs() {
   closeTeleprompter();
   latestMessageText = "";
+  latestProofInput = null;
   setResultText("");
   setCopyButtonLabel("Copy");
   setVoiceStatus("");
@@ -859,8 +963,16 @@ function updateOutputs(translation, meta = {}) {
       : String(translation?.primary || "");
 
   setResultText(latestMessageText);
+  latestProofInput = collectData();
   setCopyButtonLabel("Copy");
   setVoiceStatus("Your refined draft is ready below.");
+  trackProductLedEvent("output_generated", {
+    relationship: latestProofInput.relationship || null,
+    after_state: latestProofInput.afterState || null,
+    input_length: String(latestProofInput.message || "").length,
+    output_length: latestMessageText.length,
+    mode: meta.mode || meta.source || null
+  });
 
   if (meta.mode === "openai") {
     setTeleprompterSummary("Ready to copy or open in teleprompter.");
@@ -972,12 +1084,62 @@ async function copyLatestMessage() {
   try {
     await navigator.clipboard.writeText(latestMessageText);
     setCopyButtonLabel("Copied");
+    trackProductLedEvent("output_copied", {
+      relationship: latestProofInput?.relationship || null,
+      after_state: latestProofInput?.afterState || null
+    });
     window.setTimeout(() => {
       setCopyButtonLabel("Copy");
     }, 1200);
   } catch {
     setCopyButtonLabel("Copy failed");
   }
+}
+
+async function shareLatestMessageCard() {
+  if (!latestMessageText || !latestProofInput) {
+    setTeleprompterSummary("Refine a draft first, then share the card.");
+    return;
+  }
+
+  const text = buildShareCard();
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "SayIt before and after",
+        text
+      });
+      setTeleprompterSummary("Shared.");
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      setTeleprompterSummary("Share card copied.");
+    } else {
+      throw new Error("share-unavailable");
+    }
+    trackProductLedEvent("output_shared", {
+      relationship: latestProofInput.relationship || null,
+      after_state: latestProofInput.afterState || null,
+      attribution: Boolean(includeAttributionInput?.checked)
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") return;
+    setTeleprompterSummary("Could not share. Copy still works.");
+  }
+}
+
+function saveLatestProofDraft() {
+  const proof = saveProofDraft();
+  if (!proof) {
+    setTeleprompterSummary("Refine a draft first, then save the proof.");
+    return;
+  }
+
+  setTeleprompterSummary("Proof saved on this device.");
+  trackProductLedEvent("proof_saved", {
+    relationship: proof.relationship || null,
+    after_state: proof.afterState || null,
+    attribution: proof.attribution
+  });
 }
 
 clearOutputs();
@@ -1053,6 +1215,12 @@ document.addEventListener("keydown", (event) => {
 copyResultButton?.addEventListener("click", () => {
   void copyLatestMessage();
 });
+
+shareResultButton?.addEventListener("click", () => {
+  void shareLatestMessageCard();
+});
+
+saveProofButton?.addEventListener("click", saveLatestProofDraft);
 
 teleprompterCopyButton?.addEventListener("click", () => {
   void copyLatestMessage();
