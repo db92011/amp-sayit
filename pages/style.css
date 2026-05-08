@@ -392,6 +392,10 @@ body.sayit-install .hero-card {
   margin-top: 24px;
 }
 
+.install-action-row {
+  margin-top: 28px;
+}
+
 .btn {
   -webkit-tap-highlight-color: transparent;
   position: relative;
@@ -416,6 +420,19 @@ body.sayit-install .hero-card {
     filter 0.12s ease,
     background 0.12s ease;
   user-select: none;
+  cursor: pointer;
+}
+
+button.btn {
+  font: inherit;
+}
+
+.install-status {
+  max-width: 34rem;
+  margin: 14px auto 0;
+  color: var(--sayit-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .btn-primary {
