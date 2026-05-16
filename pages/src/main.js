@@ -51,6 +51,7 @@ const resultField = document.querySelector("#result");
 const charCount = document.querySelector("#charCount");
 const submitButton = document.querySelector("#translate-action");
 const counterText = document.querySelector("#counterText");
+const plusButton = document.querySelector("#plusBtn");
 
 const copyResultButton = document.querySelector("#copy-result");
 const shareResultButton = document.querySelector("#share-result");
@@ -92,6 +93,27 @@ let appLocked = false;
 let serviceWorkerRefreshPending = false;
 let teleprompterOpen = false;
 let currentAccessState = null;
+let lastPlusModalFocus = null;
+
+function getFocusableNodes(container) {
+  if (!container) return [];
+  return Array.from(
+    container.querySelectorAll(
+      [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        "[tabindex]:not([tabindex='-1'])"
+      ].join(",")
+    )
+  ).filter((node) => {
+    const rect = node.getBoundingClientRect();
+    const style = window.getComputedStyle(node);
+    return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+  });
+}
 
 const teleprompter = new TeleprompterController({
   container: document.querySelector("#teleprompter"),
@@ -275,11 +297,13 @@ function updatePlusModalCopy() {
 function showPlusModal() {
   if (!plusModal) return;
 
+  lastPlusModalFocus = document.activeElement;
   plusModal.hidden = false;
   plusModal.removeAttribute("hidden");
   plusModal.style.display = "flex";
   document.documentElement.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
+  document.body.classList.add("modal-open");
 
   const saved = getSayItProEmail();
   if (plusEmailInput && saved && !plusEmailInput.value) {
@@ -290,7 +314,7 @@ function showPlusModal() {
   updatePlusModalCopy();
 
   window.setTimeout(() => {
-    plusEmailInput?.focus();
+    (plusEmailInput || plusModalCard)?.focus({ preventScroll: true });
   }, 30);
 }
 
@@ -303,6 +327,11 @@ function hidePlusModal({ force = false } = {}) {
   plusModal.style.display = "none";
   document.documentElement.style.overflow = "";
   document.body.style.overflow = "";
+  document.body.classList.remove("modal-open");
+  if (lastPlusModalFocus && typeof lastPlusModalFocus.focus === "function") {
+    lastPlusModalFocus.focus({ preventScroll: true });
+  }
+  lastPlusModalFocus = null;
 }
 
 function enforceAccessGate() {
@@ -1209,6 +1238,10 @@ plusCancelButton?.addEventListener("click", (event) => {
   hidePlusModal({ force: true });
 });
 plusContinueButton?.addEventListener("click", handlePlusContinue);
+plusButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  showPlusModal();
+});
 
 teleprompterOverlay?.addEventListener("click", (event) => {
   if (event.target === teleprompterOverlay) {
@@ -1225,8 +1258,33 @@ plusModal?.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (plusModal && !plusModal.hidden) {
     if (event.key === "Escape") {
+      event.preventDefault();
       hidePlusModal({ force: true });
       return;
+    }
+
+    if (event.key === "Tab") {
+      const focusable = getFocusableNodes(plusModalCard);
+      if (!focusable.length) {
+        event.preventDefault();
+        plusModalCard?.focus({ preventScroll: true });
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+
+      if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+        return;
+      }
     }
 
     if (event.key === "Enter" && event.target === plusEmailInput) {

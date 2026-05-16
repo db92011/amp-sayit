@@ -30,37 +30,34 @@ test("speech controller disables controls when recognition is unavailable", () =
   }
 });
 
-test("speech controller prefers a native speech plugin when available", async () => {
+test("speech controller uses browser speech recognition when available", async () => {
   const originalWindow = globalThis.window;
-  const events = [];
+  let recognition;
 
   globalThis.window = {
-    Capacitor: {
-      Plugins: {
-        SpeechRecognition: {
-          async available() {
-            return { available: true };
-          },
-          async checkPermissions() {
-            return { speechRecognition: "granted" };
-          },
-          async requestPermissions() {
-            return { speechRecognition: "granted" };
-          },
-          async addListener(name, callback) {
-            events.push(name);
-            if (name === "partialResults") {
-              callback({ matches: ["native transcript"] });
-            }
-            return {
-              async remove() {}
-            };
-          },
-          async start() {
-            return { matches: ["native transcript"] };
-          },
-          async stop() {}
-        }
+    SpeechRecognition: class MockSpeechRecognition {
+      constructor() {
+        recognition = this;
+        this.continuous = false;
+        this.interimResults = false;
+        this.lang = "";
+      }
+
+      start() {
+        this.onstart();
+        this.onresult({
+          results: [
+            [
+              {
+                transcript: "browser transcript"
+              }
+            ]
+          ]
+        });
+      }
+
+      stop() {
+        this.onend();
       }
     }
   };
@@ -80,14 +77,20 @@ test("speech controller prefers a native speech plugin when available", async ()
     });
 
     assert.ok(controller);
-    assert.match(statusNode.textContent, /device microphone/i);
 
     await controller.start();
 
-    assert.equal(textarea.value, "native transcript");
+    assert.equal(textarea.value, "browser transcript");
     assert.equal(startButton.disabled, true);
     assert.equal(stopButton.disabled, false);
-    assert.deepEqual(events, ["partialResults", "listeningState"]);
+    assert.equal(recognition.continuous, true);
+    assert.equal(recognition.interimResults, true);
+    assert.equal(recognition.lang, "en-US");
+
+    await controller.stop();
+
+    assert.equal(startButton.disabled, false);
+    assert.equal(stopButton.disabled, true);
   } finally {
     globalThis.window = originalWindow;
   }

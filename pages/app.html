@@ -8,6 +8,10 @@
     />
     <title>SayIt!</title>
 
+    <meta
+      name="description"
+      content="SayIt helps you turn tense or messy thoughts into calm, clear words before you send them or say them out loud."
+    />
     <meta name="theme-color" content="#0b0f14" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
@@ -15,6 +19,14 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="SayIt!" />
+    <meta property="og:title" content="SayIt! - Clearer conversations" />
+    <meta
+      property="og:description"
+      content="A calm conversation helper for texts, emails, and difficult moments."
+    />
+    <meta property="og:image" content="/assets/SayIt-hero.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <script>
       (function () {
@@ -87,6 +99,14 @@
   </head>
 
   <body class="app">
+    <div class="app-install-banner" data-install-banner hidden>
+      <div class="app-install-banner-copy">
+        <strong>Install app</strong>
+        <span>Add SayIt to your home screen for quicker, calmer replies.</span>
+      </div>
+      <a class="app-install-banner-link" href="/#install">Install</a>
+    </div>
+
     <div class="page">
       <div class="shell">
         <header class="header">
@@ -123,18 +143,18 @@
               </p>
             </div>
 
-              <label class="field field-short">
-                <span>Who are you talking to?</span>
+              <div class="field field-short">
+                <label class="fieldLabel" for="recipient">Who are you talking to?</label>
                 <input
                   id="recipient"
                   name="recipient"
                   type="text"
                   placeholder="Name"
                 />
-              </label>
+              </div>
 
-              <label class="field">
-                <span>Relationship dynamic</span>
+              <div class="field">
+                <label class="fieldLabel" for="relationship">Relationship dynamic</label>
                 <select id="relationship" name="relationship">
                   <option value="">Select a dynamic</option>
                   <option>Spouse or partner</option>
@@ -149,7 +169,7 @@
                   <option>Online conversation</option>
                   <option>Social media comment</option>
                 </select>
-              </label>
+              </div>
 
               <fieldset class="field field-choice">
                 <legend>How should this come across?</legend>
@@ -169,25 +189,25 @@
                 </div>
               </fieldset>
 
-              <label class="field field-large">
-                <span>Extra context (optional)</span>
+              <div class="field field-large">
+                <label class="fieldLabel" for="situation">Extra context (optional)</label>
                 <textarea
                   id="situation"
                   name="situation"
                   rows="4"
                   placeholder="Add more information here."
                 ></textarea>
-              </label>
+              </div>
 
-              <label class="field field-large">
-                <span>What do you want to say?</span>
+              <div class="field field-large">
+                <label class="fieldLabel" for="message">What do you want to say?</label>
                 <textarea
                   id="message"
                   name="message"
                   rows="7"
                   placeholder=""
                 ></textarea>
-              </label>
+              </div>
 
               <p id="voice-preview" class="voice-preview"></p>
               <p id="voice-status" class="voice-status"></p>
@@ -231,23 +251,27 @@
             <textarea id="result" readonly placeholder=""></textarea>
 
             <div class="resultActions">
-              <button type="button" id="copy-result" class="ghost-button">
-                Copy
-              </button>
-              <button type="button" id="share-result" class="ghost-button">
-                Share card
-              </button>
-              <button type="button" id="save-proof" class="ghost-button">
-                Save proof
-              </button>
-              <button
-                type="button"
-                id="open-teleprompter"
-                class="ghost-button"
-                hidden
-              >
-                Teleprompter
-              </button>
+              <div class="resultActionRow">
+                <button type="button" id="copy-result" class="ghost-button">
+                  Copy
+                </button>
+                <button type="button" id="share-result" class="ghost-button">
+                  Share card
+                </button>
+              </div>
+              <div class="resultActionRow">
+                <button type="button" id="save-proof" class="ghost-button">
+                  Save proof
+                </button>
+                <button
+                  type="button"
+                  id="open-teleprompter"
+                  class="ghost-button"
+                  hidden
+                >
+                  Teleprompter
+                </button>
+              </div>
             </div>
 
             <label class="attributionToggle" for="include-attribution">
@@ -261,6 +285,9 @@
 
     <div class="counterBar" aria-live="polite">
       <span id="counterText"></span>
+      <button type="button" id="plusBtn" class="counterBtn">
+        SayIt Pro
+      </button>
     </div>
 
     <div id="plusModal" class="modalOverlay" hidden>
@@ -269,6 +296,8 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="plusTitle"
+        aria-describedby="plusDescription"
+        tabindex="-1"
       >
         <div class="modalBanner">
           <div class="modalBannerInner">
@@ -281,7 +310,7 @@
             </div>
             <div>
               <div id="plusTitle" class="modalTitle">Start your free SayIt trial</div>
-              <div class="modalSub">
+              <div id="plusDescription" class="modalSub">
                 Use your email to start your 3-day trial now. That same email becomes your restore and login identity later.
               </div>
             </div>

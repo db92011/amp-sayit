@@ -1,7 +1,7 @@
 import { corsHeaders, json, options } from "../_lib/response.js";
 import { allowSeatForDevice, ensureTrialAccess, getSeatLimit, getTrialHours } from "../_lib/sayit-plan.js";
 import { hasApprovedFreeEmail } from "../_lib/free-access.js";
-import { hasActiveSubscriptionByEmail } from "../_lib/stripe.js";
+import { hasActiveSubscriptionByEmail, hasStripeBillingConfig } from "../_lib/stripe.js";
 
 function normalizeEmail(value = "") {
   return String(value || "").trim().toLowerCase();
@@ -90,7 +90,9 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    const plan = await hasActiveSubscriptionByEmail(env, email);
+    const plan = hasStripeBillingConfig(env)
+      ? await hasActiveSubscriptionByEmail(env, email)
+      : { active: false, status: "billing_unavailable" };
     if (plan.active) {
       const seatState = await allowSeatForDevice(env?.SAYIT_DB, email, deviceId);
       if (!seatState.allowed) {
