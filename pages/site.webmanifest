@@ -2,7 +2,7 @@
   "name": "SayIt!",
   "short_name": "SayIt!",
   "description": "SayIt helps you turn tense or messy thoughts into calm, clear words before you send them or say them out loud.",
-  "start_url": "/app.html?source=pwa",
+  "start_url": "/app?source=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0b0f14",
