@@ -1,5 +1,21 @@
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+const DEFAULT_FREE_ACCESS_EMAILS = ["danbrooking@gmail.com"];
+
+function normalizeEmail(value = "") {
+  return String(value || "").trim().toLowerCase();
+}
+
+function configuredFreeAccessEmails(env) {
+  const configured = String(env?.SAYIT_FREE_ACCESS_EMAILS || env?.FREE_ACCESS_EMAILS || "").trim();
+  const emails = configured ? configured.split(/[\s,;]+/) : [];
+  return new Set([...DEFAULT_FREE_ACCESS_EMAILS, ...emails].map(normalizeEmail).filter(Boolean));
+}
+
+export function isFreeAccessEmail(env, email) {
+  const normalizedEmail = normalizeEmail(email);
+  return Boolean(normalizedEmail && configuredFreeAccessEmails(env).has(normalizedEmail));
+}
 
 export function hasStripeBillingConfig(env) {
   const secretKeyPresent = Boolean(
@@ -137,9 +153,18 @@ export async function createHostedCheckoutSession(env, { email = "", source = ""
 }
 
 export async function hasActiveSubscriptionByEmail(env, email) {
-  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {
     return { active: false, status: "none" };
+  }
+
+  if (isFreeAccessEmail(env, normalizedEmail)) {
+    return {
+      active: true,
+      status: "free_access",
+      customerId: "free_access",
+      subscriptionId: "free_access"
+    };
   }
 
   const config = getStripeConfig(env);
